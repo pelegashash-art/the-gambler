@@ -1,0 +1,79 @@
+[
+  {
+    "name": "קיליאן מבאפה",
+    "country": "צרפת",
+    "flag": "🇫🇷",
+    "club": "ריאל מדריד",
+    "age": 27,
+    "decimalOdds": 6.0,
+    "avgGoalsPerWC": 4.0,
+    "prevWCGoals": [4, 8],
+    "note": "גמר 2022, כובש הגביע הזהב ב-2022"
+  },
+  {
+    "name": "ארלינג הולאנד",
+    "country": "נורווגיה",
+    "flag": "🇳🇴",
+    "club": "מנצ'סטר סיטי",
+    "age": 26,
+    "decimalOdds": 7.0,
+    "avgGoalsPerWC": 0,
+    "prevWCGoals": [],
+    "note": "מונדיאל ראשון — נורווגיה התאפלת ל-2026"
+  },
+  {
+    "name": "ויניסיוס ג'וניור",
+    "country": "ברזיל",
+    "flag": "🇧🇷",
+    "club": "ריאל מדריד",
+    "age": 25,
+    "decimalOdds": 8.0,
+    "avgGoalsPerWC": 1.0,
+    "prevWCGoals": [1],
+    "note": "כוכב עולה, ב-2022 הבקיע שער אחד"
+  },
+  {
+    "name": "ליאו מסי",
+    "country": "ארגנטינה",
+    "flag": "🇦🇷",
+    "club": "אינטר מיאמי",
+    "age": 39,
+    "decimalOdds": 12.0,
+    "avgGoalsPerWC": 5.0,
+    "prevWCGoals": [1, 3, 4, 7, 1],
+    "note": "אלוף 2022, הכי גדול בהיסטוריה — אבל 39 בגיל"
+  },
+  {
+    "name": "לאוטארו מרטינס",
+    "country": "ארגנטינה",
+    "flag": "🇦🇷",
+    "club": "אינטר מילאן",
+    "age": 27,
+    "decimalOdds": 10.0,
+    "avgGoalsPerWC": 3.0,
+    "prevWCGoals": [3],
+    "note": "חלוץ האלוף, מרביץ בליגות אירופה"
+  },
+  {
+    "name": "הארי קיין",
+    "country": "אנגליה",
+    "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    "club": "בייר מינכן",
+    "age": 32,
+    "decimalOdds": 9.0,
+    "avgGoalsPerWC": 6.0,
+    "prevWCGoals": [6, 3],
+    "note": "גביע זהב 2018, מלך השערים של אנגליה"
+  },
+  {
+    "name": "מוחמד סאלח",
+    "country": "מצרים",
+    "flag": "🇪🇬",
+    "club": "ליברפול",
+    "age": 33,
+    "decimalOdds": 18.0,
+    "avgGoalsPerWC": 2.0,
+    "prevWCGoals": [2],
+    "note": "מצרים הקדמה ל-2026 לראשונה מ-1990"
+  }
+]

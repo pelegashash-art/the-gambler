@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:5173)",
+      "mcp__Claude_Preview__preview_start",
+      "WebFetch(domain:developers.facebook.com)",
+      "WebFetch(domain:the-odds-api.com)",
+      "WebFetch(domain:www.football-data.org)",
+      "Bash(python -c ' *)",
+      "Bash(pip install *)",
+      "Bash(python test_whatsapp.py)",
+      "Bash(copy \"C:\\\\Users\\\\peleg.ashash\\\\Desktop\\\\Claude Code\\\\Sportmonks\\\\wc2026_fixtures.xlsx\" \"C:\\\\Users\\\\peleg.ashash\\\\Desktop\\\\Claude Code\\\\the gambler\\\\data\\\\wc2026_fixtures.xlsx\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\peleg.ashash\\\\Desktop\\\\Claude Code\\\\the gambler\\\\data\" && cp \"C:\\\\Users\\\\peleg.ashash\\\\Desktop\\\\Claude Code\\\\Sportmonks\\\\wc2026_fixtures.xlsx\" \"C:\\\\Users\\\\peleg.ashash\\\\Desktop\\\\Claude Code\\\\the gambler\\\\data\\\\wc2026_fixtures.xlsx\" && echo OK)",
+      "Bash(python main.py --date 2026-06-11)",
+      "Bash(python main.py --date 2026-06-14)"
+    ]
+  }
+}
