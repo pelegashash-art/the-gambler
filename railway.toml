@@ -2,5 +2,4 @@
 builder = "NIXPACKS"
 
 [deploy]
-cronSchedule = "0 17 * * *"
-startCommand = "python main.py"
+startCommand = "python server.py"
