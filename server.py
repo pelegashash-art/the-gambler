@@ -207,12 +207,14 @@ def scheduled_job():
     print("[Scheduler] Running daily job...")
     run()
 
-scheduler = BackgroundScheduler(timezone=ISRAEL_TZ)
-scheduler.add_job(scheduled_job, CronTrigger(hour=20, minute=0, timezone=ISRAEL_TZ))
-scheduler.start()
-print("[Scheduler] Started — daily job at 20:00 Israel time")
+def start_scheduler():
+    scheduler = BackgroundScheduler(timezone=ISRAEL_TZ)
+    scheduler.add_job(scheduled_job, CronTrigger(hour=20, minute=0, timezone=ISRAEL_TZ))
+    scheduler.start()
+    print("[Scheduler] Started — daily job at 20:00 Israel time")
 
 
 if __name__ == "__main__":
+    start_scheduler()
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

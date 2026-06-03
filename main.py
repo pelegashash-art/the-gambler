@@ -5,7 +5,10 @@ Runs daily at 20:00 Israel time (via Railway cron: 0 17 * * *)
 Usage: python main.py [--date YYYY-MM-DD]
 """
 import sys
-sys.stdout.reconfigure(encoding='utf-8')
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except Exception:
+    pass
 import argparse
 from datetime import date, datetime
 import pytz
