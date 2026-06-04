@@ -74,14 +74,14 @@ def index():
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>🎲 The Gambler</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #0f172a; color: #f1f5f9;
-           max-width: 500px; margin: 60px auto; padding: 20px; }
-    h1 { color: #10b981; }
-    .card { background: #1e293b; border-radius: 12px; padding: 24px; margin: 20px 0; }
-    .btn { background: #3b82f6; color: white; border: none; padding: 12px 24px;
-           border-radius: 8px; cursor: pointer; font-size: 15px; width: 100%; }
-    .btn:hover { background: #2563eb; }
-    .msg { background: #065f46; color: #6ee7b7; padding: 10px 16px; border-radius: 8px; margin: 10px 0; }
+    body {{ font-family: Arial, sans-serif; background: #0f172a; color: #f1f5f9;
+           max-width: 500px; margin: 60px auto; padding: 20px; }}
+    h1 {{ color: #10b981; }}
+    .card {{ background: #1e293b; border-radius: 12px; padding: 24px; margin: 20px 0; }}
+    .btn {{ background: #3b82f6; color: white; border: none; padding: 12px 24px;
+           border-radius: 8px; cursor: pointer; font-size: 15px; width: 100%; }}
+    .btn:hover {{ background: #2563eb; }}
+    .msg {{ background: #065f46; color: #6ee7b7; padding: 10px 16px; border-radius: 8px; margin: 10px 0; }}
     .logout {{ float: left; color: #64748b; text-decoration: none; font-size: 13px; }}
     .stat {{ display: flex; justify-content: space-between; padding: 8px 0;
              border-bottom: 1px solid #334155; font-size: 14px; }}
