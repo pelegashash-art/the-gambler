@@ -3,8 +3,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from odds import implied_prob
 from usage_tracker import track_openai
-from football_stats import get_match_stats, get_apifootball_odds
-from oddspapi import get_oddspapi_odds
+from football_stats import get_match_stats
 
 load_dotenv(override=True)
 
@@ -21,49 +20,21 @@ SYSTEM_PROMPT = """אתה מומחה הימורי כדורגל בכיר. אתה 
 
 
 def analyze_match(match: dict, odds: dict | None) -> str:
-    """Analyze a match using GPT-4.5 and return a formatted Telegram message block."""
-
-    # ── Odds from The Odds API ────────────────────────────────────────────
-    def fmt_odds(home_he, away_he, o):
-        hp = implied_prob(o["home_odds"])
-        dp = implied_prob(o.get("draw_odds") or 0)
-        ap = implied_prob(o["away_odds"])
-        return (
-            f"{home_he}: x{o['home_odds']} ({hp}%)\n"
-            f"תיקו: x{o.get('draw_odds', 'N/A')} ({dp}%)\n"
-            f"{away_he}: x{o['away_odds']} ({ap}%)"
-        )
+    """Analyze a match using GPT-4o and return a formatted Telegram message block."""
 
     if odds:
-        odds_text = fmt_odds(match['home_he'], match['away_he'], odds)
+        hp = implied_prob(odds["home_odds"])
+        dp = implied_prob(odds.get("draw_odds") or 0)
+        ap = implied_prob(odds["away_odds"])
+        odds_text = (
+            f"{match['home_he']}: x{odds['home_odds']} ({hp}%)\n"
+            f"תיקו: x{odds.get('draw_odds', 'N/A')} ({dp}%)\n"
+            f"{match['away_he']}: x{odds['away_odds']} ({ap}%)"
+        )
     else:
         odds_text = "יחס הימורים אינו זמין"
 
-    match_date = match["kickoff_il"].date()
-
-    # ── Odds from API-Football (secondary source) ─────────────────────────
-    fb_odds = get_apifootball_odds(match["home_en"], match["away_en"], match_date)
-    if fb_odds:
-        fb_odds_text = fmt_odds(match['home_he'], match['away_he'], fb_odds)
-        fb_odds_section = (
-            f"\nיחסי הימורים (API-Football, ממוצע {fb_odds['bookmakers']} בוקמייקרים):\n"
-            f"{fb_odds_text}"
-        )
-    else:
-        fb_odds_section = ""
-
-    # ── Odds from OddsPapi (300+ bookmakers) ─────────────────────────────
-    op_odds = get_oddspapi_odds(match["home_en"], match["away_en"], match_date)
-    if op_odds:
-        op_odds_text = fmt_odds(match['home_he'], match['away_he'], op_odds)
-        op_odds_section = (
-            f"\nיחסי הימורים (OddsPapi, ממוצע {op_odds['bookmakers']} בוקמייקרים):\n"
-            f"{op_odds_text}"
-        )
-    else:
-        op_odds_section = ""
-
-    # ── Form stats ────────────────────────────────────────────────────────
+    # Form stats from API-Football (last 5 matches)
     stats_text = get_match_stats(match["home_en"], match["away_en"])
     stats_section = f"\nנתוני ביצועים אחרונים:\n{stats_text}" if stats_text else ""
 
@@ -74,12 +45,9 @@ def analyze_match(match: dict, odds: dict | None) -> str:
 - מונדיאל 2026, שלב הבתים, סיבוב {match['round']}
 - שעת קיקאוף (ישראל): {match['kickoff_il_str']}
 
-יחסי הימורים (The Odds API):
+יחסי הימורים:
 {odds_text}
-{fb_odds_section}
-{op_odds_section}
 {stats_section}
-אם יש יותר ממקור אחד לאודס — השווה ביניהם: האם הם מסכימים? פער גדול בין מקורות = אי-ודאות גבוהה, יש לציין זאת בניתוח ולהפחית ביטחון.
 
 בנה את ההודעה בפורמט הבא (החלף את הסוגריים המרובעים בתוכן אמיתי):
 
