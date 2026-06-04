@@ -88,8 +88,9 @@ def index():
 
   <div class="card">
     <h3>📤 שלח הודעת בדיקה</h3>
-    <p style="color:#94a3b8;font-size:14px">שולח ניתוח משחקי 14/06/2026 לטלגרם</p>
+    <p style="color:#94a3b8;font-size:14px">ריק = היום | או בחר תאריך ספציפי</p>
     <form method="POST" action="/test">
+      <input type="date" name="date" style="width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:white;box-sizing:border-box;font-size:15px;margin-bottom:10px">
       <button type="submit" class="btn">שלח עכשיו 🚀</button>
     </form>
   </div>
@@ -108,7 +109,9 @@ def test():
     if not session.get("auth"):
         return redirect("/login")
     from datetime import date
-    threading.Thread(target=run, args=(date(2026, 6, 14),), daemon=True).start()
+    target = request.form.get("date")
+    target_date = date.fromisoformat(target) if target else None
+    threading.Thread(target=run, args=(target_date,), daemon=True).start()
     return redirect("/")
 
 
