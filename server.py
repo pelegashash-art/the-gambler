@@ -308,46 +308,62 @@ def odds_check():
     if not session.get("auth"):
         return redirect("/login")
 
-    import pandas as pd
+    from datetime import timedelta
     from fixtures import load_fixtures
     from odds import get_wc_odds, find_match_odds
+    from oddspapi import get_oddspapi_odds
 
-    # Load all fixtures from Excel
     df = load_fixtures()
     df = df.sort_values("datetime_utc")
+    today = date.today()
+    cutoff = today + timedelta(days=14)  # OddsPapi checked only for next 14 days
 
-    # Fetch all odds events (1 API call)
+    # Fetch all Odds API events (1 call)
     all_odds = get_wc_odds()
     odds_teams = set()
     for e in all_odds:
         odds_teams.add(e.get("home_team", ""))
         odds_teams.add(e.get("away_team", ""))
 
-    # Build comparison rows
     rows = ""
+    covered_odds = covered_op = 0
+    total = len(df)
+
     for _, row in df.iterrows():
-        home_en = row["קבוצת בית (אנגלית)"]
-        away_en = row["קבוצת חוץ (אנגלית)"]
+        home_en  = row["קבוצת בית (אנגלית)"]
+        away_en  = row["קבוצת חוץ (אנגלית)"]
         date_str = row["datetime_il"].strftime("%d/%m/%Y %H:%M")
-        found = find_match_odds(home_en, away_en, all_odds)
-        status = "✅" if found else "❌"
-        color  = "#10b981" if found else "#f87171"
+        match_date = row["datetime_il"].date()
+
+        # The Odds API
+        found_odds = find_match_odds(home_en, away_en, all_odds)
+        if found_odds: covered_odds += 1
+        s1 = "✅" if found_odds else "❌"
+        c1 = "#10b981" if found_odds else "#f87171"
+
+        # OddsPapi — only for upcoming matches to save API calls
+        if today <= match_date <= cutoff:
+            op = get_oddspapi_odds(home_en, away_en, match_date)
+            if op: covered_op += 1
+            s2 = "✅" if op else "❌"
+            c2 = "#10b981" if op else "#f87171"
+        else:
+            s2 = "—"
+            c2 = "#475569"
+
         rows += f"""<tr>
           <td style="color:#94a3b8;font-size:12px">{date_str}</td>
           <td>{home_en}</td>
           <td>{away_en}</td>
-          <td style="color:{color};font-weight:bold;text-align:center">{status}</td>
+          <td style="color:{c1};font-weight:bold;text-align:center">{s1}</td>
+          <td style="color:{c2};font-weight:bold;text-align:center">{s2}</td>
         </tr>"""
 
-    # List all team names the Odds API returned
     api_names = "".join(
         f'<span style="display:inline-block;background:#0f172a;border:1px solid #334155;'
         f'border-radius:4px;padding:2px 8px;margin:3px;font-size:12px;color:#94a3b8">{t}</span>'
         for t in sorted(odds_teams) if t
     )
-
-    covered   = sum(1 for _, r in df.iterrows() if find_match_odds(r["קבוצת בית (אנגלית)"], r["קבוצת חוץ (אנגלית)"], all_odds))
-    total     = len(df)
 
     return f"""<!DOCTYPE html>
 <html dir="ltr" lang="en">
@@ -357,27 +373,47 @@ def odds_check():
   <title>Odds Coverage Check</title>
   <style>
     body {{ font-family: Arial, sans-serif; background: #0f172a; color: #f1f5f9;
-           max-width: 900px; margin: 30px auto; padding: 20px; }}
+           max-width: 960px; margin: 30px auto; padding: 20px; }}
     h2 {{ color: #10b981; }}
     .back {{ color: #64748b; text-decoration: none; font-size: 13px; }}
     .card {{ background: #1e293b; border-radius: 12px; padding: 20px; margin: 16px 0; }}
     table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
-    th {{ text-align: left; color: #64748b; padding: 6px 8px; border-bottom: 1px solid #334155; }}
+    th {{ text-align: center; color: #64748b; padding: 6px 8px; border-bottom: 1px solid #334155; }}
+    th:nth-child(1), th:nth-child(2), th:nth-child(3) {{ text-align: left; }}
     td {{ padding: 6px 8px; border-bottom: 1px solid #1e293b; }}
+    td:nth-child(4), td:nth-child(5) {{ text-align: center; }}
     tr:hover td {{ background: #334155; }}
-    .summary {{ font-size: 15px; margin-bottom: 8px; }}
+    .summary {{ display:flex; gap:24px; flex-wrap:wrap; margin-bottom:12px; font-size:14px; }}
+    .sum-item {{ background:#0f172a; border-radius:8px; padding:8px 14px; }}
+    .sum-val {{ font-size:20px; font-weight:bold; color:#10b981; }}
   </style>
 </head>
 <body>
   <a class="back" href="/">← חזרה</a>
-  <h2>📈 Odds API — Coverage Check</h2>
-  <p class="summary">מכוסים: <strong style="color:#10b981">{covered}</strong> / {total} משחקים | אירועים ב-API: <strong>{len(all_odds)}</strong></p>
+  <h2>📊 Odds Coverage Check</h2>
+
+  <div class="summary">
+    <div class="sum-item">
+      <div class="sum-val">{covered_odds}/{total}</div>
+      <div style="color:#64748b;font-size:12px">The Odds API</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-val">{covered_op}/?</div>
+      <div style="color:#64748b;font-size:12px">OddsPapi (14 ימים קרובים)</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-val">{len(all_odds)}</div>
+      <div style="color:#64748b;font-size:12px">אירועים ב-Odds API</div>
+    </div>
+  </div>
 
   <div class="card">
-    <h3 style="margin-top:0">השוואת משחקים</h3>
+    <h3 style="margin-top:0">השוואת כיסוי לפי משחק</h3>
+    <p style="color:#64748b;font-size:12px;margin-top:0">עמודת OddsPapi נבדקת רק למשחקים ב-14 הימים הקרובים (חיסכון ב-API calls). — = לא נבדק.</p>
     <table>
       <tr>
-        <th>תאריך</th><th>בית</th><th>חוץ</th><th>Odds?</th>
+        <th>תאריך</th><th>בית</th><th>חוץ</th>
+        <th>The Odds API</th><th>OddsPapi</th>
       </tr>
       {rows}
     </table>
