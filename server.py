@@ -4,6 +4,7 @@ The Gambler — Web Server with daily scheduler.
 """
 import os
 import threading
+from datetime import date
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -60,6 +61,49 @@ def logout():
     return redirect("/login")
 
 
+def get_schedule_html():
+    """Return HTML for the full match schedule grouped by date."""
+    try:
+        from fixtures import load_fixtures
+        import pandas as pd
+        df = load_fixtures()
+        today = date.today()
+        df = df[df["datetime_il"].dt.date >= today].copy()
+        df = df.sort_values("datetime_utc")
+
+        # Group by date
+        rows_by_date = {}
+        for _, row in df.iterrows():
+            d = row["datetime_il"].date()
+            if d not in rows_by_date:
+                rows_by_date[d] = []
+            rows_by_date[d].append(row)
+
+        html = ""
+        for d, matches in rows_by_date.items():
+            date_str = d.strftime("%d/%m/%Y")
+            iso = d.isoformat()
+            match_lines = "".join(
+                f'<div class="match">⚽ {r["קבוצת בית (עברית)"]} נגד {r["קבוצת חוץ (עברית)"]} '
+                f'<span class="time">{r["datetime_il"].strftime("%H:%M")}</span></div>'
+                for r in matches
+            )
+            html += f"""
+<div class="day-card">
+  <div class="day-header">
+    <span>📅 {date_str} &nbsp;·&nbsp; {len(matches)} משחקים</span>
+    <form method="POST" action="/test" style="display:inline">
+      <input type="hidden" name="date" value="{iso}">
+      <button type="submit" class="btn-send">שלח ניתוח 🚀</button>
+    </form>
+  </div>
+  {match_lines}
+</div>"""
+        return html or "<p style='color:#64748b'>אין משחקים קרובים</p>"
+    except Exception as e:
+        return f"<p style='color:#f87171'>שגיאה בטעינת לוח: {e}</p>"
+
+
 @app.route("/")
 def index():
     if not session.get("auth"):
@@ -67,6 +111,8 @@ def index():
     from usage_tracker import get_stats
     s = get_stats()
     odds_bar = min(100, int(s['odds_calls'] / 500 * 100))
+    schedule_html = get_schedule_html()
+
     return f"""<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
@@ -75,20 +121,24 @@ def index():
   <title>🎲 The Gambler</title>
   <style>
     body {{ font-family: Arial, sans-serif; background: #0f172a; color: #f1f5f9;
-           max-width: 500px; margin: 60px auto; padding: 20px; }}
-    h1 {{ color: #10b981; }}
-    .card {{ background: #1e293b; border-radius: 12px; padding: 24px; margin: 20px 0; }}
-    .btn {{ background: #3b82f6; color: white; border: none; padding: 12px 24px;
-           border-radius: 8px; cursor: pointer; font-size: 15px; width: 100%; }}
-    .btn:hover {{ background: #2563eb; }}
-    .msg {{ background: #065f46; color: #6ee7b7; padding: 10px 16px; border-radius: 8px; margin: 10px 0; }}
+           max-width: 650px; margin: 40px auto; padding: 20px; }}
+    h1 {{ color: #10b981; margin-bottom: 4px; }}
+    .card {{ background: #1e293b; border-radius: 12px; padding: 20px; margin: 16px 0; }}
     .logout {{ float: left; color: #64748b; text-decoration: none; font-size: 13px; }}
-    .stat {{ display: flex; justify-content: space-between; padding: 8px 0;
+    .stat {{ display: flex; justify-content: space-between; padding: 7px 0;
              border-bottom: 1px solid #334155; font-size: 14px; }}
     .stat:last-child {{ border-bottom: none; }}
     .val {{ color: #10b981; font-weight: bold; }}
-    .bar-bg {{ background: #334155; border-radius: 4px; height: 8px; margin-top: 6px; }}
-    .bar-fill {{ background: #10b981; border-radius: 4px; height: 8px; }}
+    .bar-bg {{ background: #334155; border-radius: 4px; height: 6px; margin: 6px 0 10px; }}
+    .bar-fill {{ background: #10b981; border-radius: 4px; height: 6px; }}
+    .day-card {{ background: #1e293b; border-radius: 10px; padding: 14px 16px; margin: 10px 0; }}
+    .day-header {{ display: flex; justify-content: space-between; align-items: center;
+                   margin-bottom: 8px; font-weight: bold; }}
+    .btn-send {{ background: #10b981; color: white; border: none; padding: 6px 14px;
+                 border-radius: 6px; cursor: pointer; font-size: 13px; }}
+    .btn-send:hover {{ background: #059669; }}
+    .match {{ font-size: 13px; color: #94a3b8; padding: 3px 0; }}
+    .time {{ color: #64748b; margin-left: 6px; }}
   </style>
 </head>
 <body>
@@ -96,31 +146,23 @@ def index():
   <a class="logout" href="/logout">יציאה</a>
 
   <div class="card">
-    <h3>📤 שלח הודעת בדיקה</h3>
-    <p style="color:#94a3b8;font-size:14px">ריק = היום | או בחר תאריך ספציפי</p>
-    <form method="POST" action="/test">
-      <input type="date" name="date" style="width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:white;box-sizing:border-box;font-size:15px;margin-bottom:10px">
-      <button type="submit" class="btn">שלח עכשיו 🚀</button>
-    </form>
-  </div>
-
-  <div class="card">
-    <h3>📊 שימוש ב-APIs</h3>
+    <h3 style="margin-top:0">📊 שימוש ב-APIs</h3>
     <div class="stat"><span>🤖 Anthropic — קריאות</span><span class="val">{s['anthropic_calls']}</span></div>
     <div class="stat"><span>🤖 Anthropic — עלות</span><span class="val">${s['anthropic_cost']}</span></div>
     <div class="stat"><span>🤖 Anthropic — טוקנים</span><span class="val">{s['anthropic_input']:,} in / {s['anthropic_output']:,} out</span></div>
-    <div class="stat">
-      <span>📈 Odds API — {s['odds_calls']}/500 החודש</span>
-      <span class="val">{s['odds_remaining']} נותרו</span>
-    </div>
+    <div class="stat"><span>📈 Odds API — {s['odds_calls']}/500 החודש</span><span class="val">{s['odds_remaining']} נותרו</span></div>
     <div class="bar-bg"><div class="bar-fill" style="width:{odds_bar}%"></div></div>
-    <div class="stat"><span>📨 Telegram</span><span class="val">∞ ללא הגבלה</span></div>
+    <div class="stat"><span>📨 Telegram</span><span class="val">∞</span></div>
   </div>
 
-  <div class="card" style="color:#64748b; font-size:13px;">
-    ⏰ ההודעה היומית נשלחת אוטומטית כל יום ב-<strong style="color:#94a3b8">20:00 שעון ישראל</strong>
-    <br><br>
-    📨 נשלח לערוץ <strong style="color:#94a3b8">TheGambler</strong> בטלגרם
+  <div class="card">
+    <h3 style="margin-top:0">📅 לוח משחקים — שלח ניתוח</h3>
+    <p style="color:#64748b;font-size:13px;margin-top:0">כפתור "שלח ניתוח" ישלח לטלגרם את ניתוח המשחקים של אותו יום</p>
+    {schedule_html}
+  </div>
+
+  <div style="color:#64748b;font-size:12px;text-align:center;margin-top:16px">
+    ⏰ שליחה אוטומטית כל יום ב-20:00 שעון ישראל
   </div>
 </body>
 </html>"""
@@ -130,7 +172,6 @@ def index():
 def test():
     if not session.get("auth"):
         return redirect("/login")
-    from datetime import date
     target = request.form.get("date")
     target_date = date.fromisoformat(target) if target else None
     threading.Thread(target=run, args=(target_date,), daemon=True).start()
