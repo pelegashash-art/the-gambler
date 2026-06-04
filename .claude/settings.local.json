@@ -18,7 +18,8 @@
       "Bash(python main.py --date 2026-06-14)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(rm \"/mnt/c/Users/peleg.ashash/Desktop/Claude Code/the gambler/whatsapp.py\" \"/mnt/c/Users/peleg.ashash/Desktop/Claude Code/the gambler/test_whatsapp.py\")"
     ]
   }
 }

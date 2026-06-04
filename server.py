@@ -131,6 +131,17 @@ def index():
     .val {{ color: #10b981; font-weight: bold; }}
     .bar-bg {{ background: #334155; border-radius: 4px; height: 6px; margin: 6px 0 10px; }}
     .bar-fill {{ background: #10b981; border-radius: 4px; height: 6px; }}
+    .flow {{ display: flex; flex-direction: column; gap: 0; }}
+    .flow-step {{ display: flex; align-items: flex-start; gap: 12px; padding: 10px 0;
+                  border-bottom: 1px solid #334155; font-size: 13px; }}
+    .flow-step:last-child {{ border-bottom: none; }}
+    .flow-icon {{ font-size: 20px; min-width: 28px; text-align: center; margin-top: 1px; }}
+    .flow-body {{ flex: 1; }}
+    .flow-title {{ font-weight: bold; color: #f1f5f9; margin-bottom: 2px; }}
+    .flow-desc {{ color: #94a3b8; line-height: 1.5; }}
+    .flow-tag {{ display: inline-block; background: #0f172a; border: 1px solid #334155;
+                 border-radius: 4px; padding: 1px 7px; font-size: 11px; color: #64748b;
+                 margin-top: 4px; margin-left: 4px; }}
     .day-card {{ background: #1e293b; border-radius: 10px; padding: 14px 16px; margin: 10px 0; }}
     .day-header {{ display: flex; justify-content: space-between; align-items: center;
                    margin-bottom: 8px; font-weight: bold; }}
@@ -139,9 +150,94 @@ def index():
     .btn-send:hover {{ background: #059669; }}
     .match {{ font-size: 13px; color: #94a3b8; padding: 3px 0; }}
     .time {{ color: #64748b; margin-left: 6px; }}
+    /* floating how-it-works */
+    .fab {{ position: fixed; top: 16px; left: 16px; background: #1e293b;
+            border: 1px solid #334155; color: #94a3b8; border-radius: 10px;
+            padding: 7px 13px; cursor: pointer; font-size: 13px; z-index: 100;
+            display: flex; align-items: center; gap: 6px; }}
+    .fab:hover {{ background: #334155; color: #f1f5f9; }}
+    .fab-label {{ font-size: 12px; }}
+    .panel-overlay {{ display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
+                      z-index: 200; align-items: flex-start; justify-content: flex-start; }}
+    .panel-overlay.open {{ display: flex; }}
+    .panel-box {{ background: #1e293b; border: 1px solid #334155; border-radius: 14px;
+                  margin: 14px; width: 340px; max-height: calc(100vh - 28px);
+                  overflow-y: auto; padding: 20px; position: relative; }}
+    .panel-close {{ position: absolute; top: 12px; left: 12px; background: none;
+                    border: none; color: #64748b; font-size: 18px; cursor: pointer; }}
+    .panel-close:hover {{ color: #f1f5f9; }}
   </style>
 </head>
 <body>
+
+  <!-- floating button -->
+  <button class="fab" onclick="document.getElementById('flowPanel').classList.add('open')">
+    ⚙️ <span class="fab-label">איך זה עובד?</span>
+  </button>
+
+  <!-- overlay panel -->
+  <div class="panel-overlay" id="flowPanel"
+       onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="panel-box">
+      <button class="panel-close" onclick="document.getElementById('flowPanel').classList.remove('open')">✕</button>
+      <h3 style="margin-top:0;margin-bottom:14px">⚙️ איך התהליך עובד</h3>
+      <div class="flow">
+
+        <div class="flow-step">
+          <div class="flow-icon">📂</div>
+          <div class="flow-body">
+            <div class="flow-title">שלב 1 — לוח המשחקים</div>
+            <div class="flow-desc">הבוט קורא את <strong>wc2026_fixtures.xlsx</strong> המקומי (72 משחקים) ומסנן את משחקי היום לפי שעון ישראל.</div>
+            <span class="flow-tag">📁 קובץ מקומי</span>
+            <span class="flow-tag">ללא API</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-icon">📈</div>
+          <div class="flow-body">
+            <div class="flow-title">שלב 2 — יחסי הימורים</div>
+            <div class="flow-desc">קריאה אחת ל-<strong>The Odds API</strong> לשליפת כל יחסי ה-1X2. התאמה לכל משחק לפי שם הקבוצה.</div>
+            <span class="flow-tag">🌐 api.the-odds-api.com</span>
+            <span class="flow-tag">500/חודש (חינם)</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-icon">🤖</div>
+          <div class="flow-body">
+            <div class="flow-title">שלב 3 — ניתוח עם Claude</div>
+            <div class="flow-desc">לכל משחק — קריאה נפרדת ל-<strong>Anthropic Claude Sonnet</strong> עם שמות הקבוצות, שעה ויחסי הימורים. מחזיר ניתוח בעברית, המלצה, ניחוש תוצאה וביטחון בכוכבים.</div>
+            <span class="flow-tag">🌐 api.anthropic.com</span>
+            <span class="flow-tag">claude-sonnet-4-5</span>
+            <span class="flow-tag">~600 טוקנים/קריאה</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-icon">📨</div>
+          <div class="flow-body">
+            <div class="flow-title">שלב 4 — שליחה לטלגרם</div>
+            <div class="flow-desc">כל הניתוחים מחוברים להודעה אחת ונשלחים לערוץ. הודעות ארוכות מפוצלות ל-4,000 תווים אוטומטית.</div>
+            <span class="flow-tag">🌐 api.telegram.org</span>
+            <span class="flow-tag">ללא מגבלה</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-icon">⏰</div>
+          <div class="flow-body">
+            <div class="flow-title">תזמון אוטומטי</div>
+            <div class="flow-desc">כל יום ב-<strong>20:00 שעון ישראל</strong> (17:00 UTC) — APScheduler המובנה בשרת מפעיל את כל התהליך.</div>
+            <span class="flow-tag">APScheduler</span>
+            <span class="flow-tag">Asia/Jerusalem</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <h1>🎲 The Gambler</h1>
   <a class="logout" href="/logout">יציאה</a>
 
