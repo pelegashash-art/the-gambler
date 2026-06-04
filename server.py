@@ -269,8 +269,12 @@ def index():
     {schedule_html}
   </div>
 
-  <div style="color:#64748b;font-size:12px;text-align:center;margin-top:16px">
-    ⏰ שליחה אוטומטית כל יום ב-20:00 שעון ישראל
+  <div style="text-align:center;margin-top:16px">
+    <a href="/odds-check" style="color:#64748b;font-size:12px;text-decoration:none;
+       border:1px solid #334155;padding:6px 14px;border-radius:8px;display:inline-block;margin-bottom:10px">
+      📈 בדוק כיסוי Odds API
+    </a>
+    <div style="color:#64748b;font-size:12px;margin-top:6px">⏰ שליחה אוטומטית כל יום ב-20:00 שעון ישראל</div>
   </div>
 </body>
 </html>"""
@@ -284,6 +288,94 @@ def test():
     target_date = date.fromisoformat(target) if target else None
     threading.Thread(target=run, args=(target_date,), daemon=True).start()
     return redirect("/")
+
+
+@app.route("/odds-check")
+def odds_check():
+    if not session.get("auth"):
+        return redirect("/login")
+
+    import pandas as pd
+    from fixtures import load_fixtures
+    from odds import get_wc_odds, find_match_odds
+
+    # Load all fixtures from Excel
+    df = load_fixtures()
+    df = df.sort_values("datetime_utc")
+
+    # Fetch all odds events (1 API call)
+    all_odds = get_wc_odds()
+    odds_teams = set()
+    for e in all_odds:
+        odds_teams.add(e.get("home_team", ""))
+        odds_teams.add(e.get("away_team", ""))
+
+    # Build comparison rows
+    rows = ""
+    for _, row in df.iterrows():
+        home_en = row["קבוצת בית (אנגלית)"]
+        away_en = row["קבוצת חוץ (אנגלית)"]
+        date_str = row["datetime_il"].strftime("%d/%m/%Y %H:%M")
+        found = find_match_odds(home_en, away_en, all_odds)
+        status = "✅" if found else "❌"
+        color  = "#10b981" if found else "#f87171"
+        rows += f"""<tr>
+          <td style="color:#94a3b8;font-size:12px">{date_str}</td>
+          <td>{home_en}</td>
+          <td>{away_en}</td>
+          <td style="color:{color};font-weight:bold;text-align:center">{status}</td>
+        </tr>"""
+
+    # List all team names the Odds API returned
+    api_names = "".join(
+        f'<span style="display:inline-block;background:#0f172a;border:1px solid #334155;'
+        f'border-radius:4px;padding:2px 8px;margin:3px;font-size:12px;color:#94a3b8">{t}</span>'
+        for t in sorted(odds_teams) if t
+    )
+
+    covered   = sum(1 for _, r in df.iterrows() if find_match_odds(r["קבוצת בית (אנגלית)"], r["קבוצת חוץ (אנגלית)"], all_odds))
+    total     = len(df)
+
+    return f"""<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Odds Coverage Check</title>
+  <style>
+    body {{ font-family: Arial, sans-serif; background: #0f172a; color: #f1f5f9;
+           max-width: 900px; margin: 30px auto; padding: 20px; }}
+    h2 {{ color: #10b981; }}
+    .back {{ color: #64748b; text-decoration: none; font-size: 13px; }}
+    .card {{ background: #1e293b; border-radius: 12px; padding: 20px; margin: 16px 0; }}
+    table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
+    th {{ text-align: left; color: #64748b; padding: 6px 8px; border-bottom: 1px solid #334155; }}
+    td {{ padding: 6px 8px; border-bottom: 1px solid #1e293b; }}
+    tr:hover td {{ background: #334155; }}
+    .summary {{ font-size: 15px; margin-bottom: 8px; }}
+  </style>
+</head>
+<body>
+  <a class="back" href="/">← חזרה</a>
+  <h2>📈 Odds API — Coverage Check</h2>
+  <p class="summary">מכוסים: <strong style="color:#10b981">{covered}</strong> / {total} משחקים | אירועים ב-API: <strong>{len(all_odds)}</strong></p>
+
+  <div class="card">
+    <h3 style="margin-top:0">השוואת משחקים</h3>
+    <table>
+      <tr>
+        <th>תאריך</th><th>בית</th><th>חוץ</th><th>Odds?</th>
+      </tr>
+      {rows}
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">שמות קבוצות ב-Odds API ({len(odds_teams)})</h3>
+    <div>{api_names}</div>
+  </div>
+</body>
+</html>"""
 
 
 @app.route("/health")
