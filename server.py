@@ -64,7 +64,10 @@ def logout():
 def index():
     if not session.get("auth"):
         return redirect("/login")
-    return """<!DOCTYPE html>
+    from usage_tracker import get_stats
+    s = get_stats()
+    odds_bar = min(100, int(s['odds_calls'] / 500 * 100))
+    return f"""<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
   <meta charset="UTF-8">
@@ -79,7 +82,13 @@ def index():
            border-radius: 8px; cursor: pointer; font-size: 15px; width: 100%; }
     .btn:hover { background: #2563eb; }
     .msg { background: #065f46; color: #6ee7b7; padding: 10px 16px; border-radius: 8px; margin: 10px 0; }
-    .logout { float: left; color: #64748b; text-decoration: none; font-size: 13px; }
+    .logout {{ float: left; color: #64748b; text-decoration: none; font-size: 13px; }}
+    .stat {{ display: flex; justify-content: space-between; padding: 8px 0;
+             border-bottom: 1px solid #334155; font-size: 14px; }}
+    .stat:last-child {{ border-bottom: none; }}
+    .val {{ color: #10b981; font-weight: bold; }}
+    .bar-bg {{ background: #334155; border-radius: 4px; height: 8px; margin-top: 6px; }}
+    .bar-fill {{ background: #10b981; border-radius: 4px; height: 8px; }}
   </style>
 </head>
 <body>
@@ -93,6 +102,19 @@ def index():
       <input type="date" name="date" style="width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:white;box-sizing:border-box;font-size:15px;margin-bottom:10px">
       <button type="submit" class="btn">שלח עכשיו 🚀</button>
     </form>
+  </div>
+
+  <div class="card">
+    <h3>📊 שימוש ב-APIs</h3>
+    <div class="stat"><span>🤖 Anthropic — קריאות</span><span class="val">{s['anthropic_calls']}</span></div>
+    <div class="stat"><span>🤖 Anthropic — עלות</span><span class="val">${s['anthropic_cost']}</span></div>
+    <div class="stat"><span>🤖 Anthropic — טוקנים</span><span class="val">{s['anthropic_input']:,} in / {s['anthropic_output']:,} out</span></div>
+    <div class="stat">
+      <span>📈 Odds API — {s['odds_calls']}/500 החודש</span>
+      <span class="val">{s['odds_remaining']} נותרו</span>
+    </div>
+    <div class="bar-bg"><div class="bar-fill" style="width:{odds_bar}%"></div></div>
+    <div class="stat"><span>📨 Telegram</span><span class="val">∞ ללא הגבלה</span></div>
   </div>
 
   <div class="card" style="color:#64748b; font-size:13px;">

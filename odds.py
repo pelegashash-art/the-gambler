@@ -12,6 +12,8 @@ SPORT_KEYS = ["soccer_fifa_world_cup", "soccer_international_friendlies"]
 
 def get_wc_odds() -> list[dict]:
     """Fetch all available WC match odds."""
+    from usage_tracker import track_odds_api
+    track_odds_api()
     for sport_key in SPORT_KEYS:
         url = f"{BASE_URL}/sports/{sport_key}/odds"
         params = {
