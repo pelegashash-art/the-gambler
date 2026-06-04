@@ -187,8 +187,8 @@ def index():
           <div class="flow-icon">📂</div>
           <div class="flow-body">
             <div class="flow-title">שלב 1 — לוח המשחקים</div>
-            <div class="flow-desc">הבוט קורא את <strong>wc2026_fixtures.xlsx</strong> המקומי (72 משחקים) ומסנן את משחקי היום לפי שעון ישראל.</div>
-            <span class="flow-tag">📁 קובץ מקומי</span>
+            <div class="flow-desc">הבוט קורא קובץ Excel מקומי עם 72 משחקי שלב הבתים של מונדיאל 2026, וסולן אילו מהם מתקיימים היום לפי שעון ישראל (UTC+3).</div>
+            <span class="flow-tag">📁 wc2026_fixtures.xlsx</span>
             <span class="flow-tag">ללא API</span>
           </div>
         </div>
@@ -197,30 +197,32 @@ def index():
           <div class="flow-icon">📈</div>
           <div class="flow-body">
             <div class="flow-title">שלב 2 — יחסי הימורים</div>
-            <div class="flow-desc">קריאה אחת ל-<strong>The Odds API</strong> לשליפת כל יחסי ה-1X2. התאמה לכל משחק לפי שם הקבוצה.</div>
+            <div class="flow-desc"><strong>קריאה אחת בלבד</strong> ל-The Odds API לשליפת כל האודס הזמינים. לאחר מכן התאמה לכל משחק לפי שם הקבוצה, כולל מיפוי שמות שונים (למשל Türkiye=Turkey, Côte d'Ivoire=Ivory Coast).</div>
             <span class="flow-tag">🌐 api.the-odds-api.com</span>
-            <span class="flow-tag">500/חודש (חינם)</span>
+            <span class="flow-tag">500 קריאות/חודש</span>
+            <span class="flow-tag">שוק: 1X2</span>
           </div>
         </div>
 
         <div class="flow-step">
           <div class="flow-icon">⚽</div>
           <div class="flow-body">
-            <div class="flow-title">שלב 3 — סטטיסטיקות חיות</div>
-            <div class="flow-desc">לכל קבוצה — שליפת 5 משחקים אחרונים מ-<strong>API-Football</strong>: פורמה (W/D/L), שערים שנבקעו וספוגים. מזהה הקבוצה נשמר ב-cache לחיסכון בקריאות.</div>
+            <div class="flow-title">שלב 3 — פורמה וסטטיסטיקות</div>
+            <div class="flow-desc">לכל קבוצה — 2 קריאות ל-<strong>API-Football</strong>: חיפוש מזהה הקבוצה (נשמר ב-cache אחרי הפעם הראשונה) + שליפת 5 המשחקים האחרונים. המערכת מחשבת פורמה (W/D/L) ושערים שנבקעו/ספוגים.</div>
             <span class="flow-tag">🌐 v3.football.api-sports.io</span>
-            <span class="flow-tag">100 קריאות/יום (חינם)</span>
+            <span class="flow-tag">100 קריאות/יום</span>
+            <span class="flow-tag">cache מקומי לחיסכון</span>
           </div>
         </div>
 
         <div class="flow-step">
           <div class="flow-icon">🤖</div>
           <div class="flow-body">
-            <div class="flow-title">שלב 4 — ניתוח עם GPT-4o</div>
-            <div class="flow-desc">לכל משחק — קריאה נפרדת ל-<strong>OpenAI GPT-4o</strong> עם יחסי הימורים + נתוני פורמה עדכניים. מחזיר ניתוח בעברית, המלצה, ניחוש תוצאה וביטחון בכוכבים.</div>
+            <div class="flow-title">שלב 4 — ניתוח GPT-4o</div>
+            <div class="flow-desc">לכל משחק — קריאה נפרדת ל-<strong>OpenAI GPT-4o</strong> עם: שמות הקבוצות, שעת הקיקאוף, יחסי הימורים + פורמה עדכנית. GPT מחזיר ניתוח בעברית, המלצת 1/X/2, ניחוש תוצאה וביטחון בכוכבים (★).</div>
             <span class="flow-tag">🌐 api.openai.com</span>
             <span class="flow-tag">gpt-4o</span>
-            <span class="flow-tag">~700 טוקנים/קריאה</span>
+            <span class="flow-tag">~$0.002 למשחק</span>
           </div>
         </div>
 
@@ -228,7 +230,7 @@ def index():
           <div class="flow-icon">📨</div>
           <div class="flow-body">
             <div class="flow-title">שלב 5 — שליחה לטלגרם</div>
-            <div class="flow-desc">כל הניתוחים מחוברים להודעה אחת ונשלחים לערוץ. הודעות ארוכות מפוצלות ל-4,000 תווים אוטומטית.</div>
+            <div class="flow-desc">כל הניתוחים מחוברים להודעה יומית אחת מסודרת ונשלחים לערוץ הטלגרם הפרטי. הודעות מעל 4,000 תווים מפוצלות אוטומטית.</div>
             <span class="flow-tag">🌐 api.telegram.org</span>
             <span class="flow-tag">ללא מגבלה</span>
           </div>
@@ -238,9 +240,9 @@ def index():
           <div class="flow-icon">⏰</div>
           <div class="flow-body">
             <div class="flow-title">שלב 6 — תזמון אוטומטי</div>
-            <div class="flow-desc">כל יום ב-<strong>20:00 שעון ישראל</strong> (17:00 UTC) — APScheduler המובנה בשרת מפעיל את כל התהליך.</div>
+            <div class="flow-desc">כל יום ב-<strong>20:00 שעון ישראל</strong> — APScheduler המובנה בשרת Flask מפעיל את כל התהליך. ניתן גם להפעיל ידנית מכל יום בלוח המשחקים.</div>
             <span class="flow-tag">APScheduler</span>
-            <span class="flow-tag">Asia/Jerusalem</span>
+            <span class="flow-tag">Asia/Jerusalem (UTC+3)</span>
           </div>
         </div>
 
