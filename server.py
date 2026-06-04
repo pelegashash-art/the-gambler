@@ -110,7 +110,7 @@ def index():
         return redirect("/login")
     from usage_tracker import get_stats
     s = get_stats()
-    odds_bar = min(100, int(s['odds_calls'] / 500 * 100))
+    odds_bar = 0  # odds API no longer used
     schedule_html = get_schedule_html()
 
     return f"""<!DOCTYPE html>
@@ -194,42 +194,20 @@ def index():
         </div>
 
         <div class="flow-step">
-          <div class="flow-icon">📈</div>
-          <div class="flow-body">
-            <div class="flow-title">שלב 2 — יחסי הימורים</div>
-            <div class="flow-desc"><strong>קריאה אחת בלבד</strong> ל-The Odds API לשליפת כל האודס הזמינים. לאחר מכן התאמה לכל משחק לפי שם הקבוצה, כולל מיפוי שמות שונים (למשל Türkiye=Turkey, Côte d'Ivoire=Ivory Coast).</div>
-            <span class="flow-tag">🌐 api.the-odds-api.com</span>
-            <span class="flow-tag">500 קריאות/חודש</span>
-            <span class="flow-tag">שוק: 1X2</span>
-          </div>
-        </div>
-
-        <div class="flow-step">
-          <div class="flow-icon">⚽</div>
-          <div class="flow-body">
-            <div class="flow-title">שלב 3 — פורמה וסטטיסטיקות</div>
-            <div class="flow-desc">לכל קבוצה — 2 קריאות ל-<strong>API-Football</strong>: חיפוש מזהה הקבוצה (נשמר ב-cache אחרי הפעם הראשונה) + שליפת 5 המשחקים האחרונים. המערכת מחשבת פורמה (W/D/L) ושערים שנבקעו/ספוגים.</div>
-            <span class="flow-tag">🌐 v3.football.api-sports.io</span>
-            <span class="flow-tag">100 קריאות/יום</span>
-            <span class="flow-tag">cache מקומי לחיסכון</span>
-          </div>
-        </div>
-
-        <div class="flow-step">
           <div class="flow-icon">🤖</div>
           <div class="flow-body">
-            <div class="flow-title">שלב 4 — ניתוח GPT-4o</div>
-            <div class="flow-desc">לכל משחק — קריאה נפרדת ל-<strong>OpenAI GPT-4o</strong> עם: שמות הקבוצות, שעת הקיקאוף, יחסי הימורים + פורמה עדכנית. GPT מחזיר ניתוח בעברית, המלצת 1/X/2, ניחוש תוצאה וביטחון בכוכבים (★).</div>
-            <span class="flow-tag">🌐 api.openai.com</span>
-            <span class="flow-tag">gpt-4o</span>
-            <span class="flow-tag">~$0.002 למשחק</span>
+            <div class="flow-title">שלב 2 — ניתוח Gemini Flash</div>
+            <div class="flow-desc">לכל משחק — קריאה נפרדת ל-<strong>Gemini 2.0 Flash</strong> עם שמות הקבוצות ושעת הקיקאוף. Gemini מחזיר ניתוח בעברית: פייבוריטית, יחסי כוחות (1X2%), צפי שערים (Over/Under 2.5), הימור מומלץ ותוצאה סבירה.</div>
+            <span class="flow-tag">🌐 generativelanguage.googleapis.com</span>
+            <span class="flow-tag">gemini-2.0-flash</span>
+            <span class="flow-tag">~$0.0001 למשחק</span>
           </div>
         </div>
 
         <div class="flow-step">
           <div class="flow-icon">📨</div>
           <div class="flow-body">
-            <div class="flow-title">שלב 5 — שליחה לטלגרם</div>
+            <div class="flow-title">שלב 3 — שליחה לטלגרם</div>
             <div class="flow-desc">כל הניתוחים מחוברים להודעה יומית אחת מסודרת ונשלחים לערוץ הטלגרם הפרטי. הודעות מעל 4,000 תווים מפוצלות אוטומטית.</div>
             <span class="flow-tag">🌐 api.telegram.org</span>
             <span class="flow-tag">ללא מגבלה</span>
@@ -239,7 +217,7 @@ def index():
         <div class="flow-step">
           <div class="flow-icon">🌙</div>
           <div class="flow-body">
-            <div class="flow-title">שלב 6 — כיסוי משחקי לילה</div>
+            <div class="flow-title">שלב 4 — כיסוי משחקי לילה</div>
             <div class="flow-desc">מכיוון שרוב משחקי המונדיאל מתקיימים בשעות הלילה של ישראל, ההודעה של 20:00 כוללת גם את משחקי אחרי חצות — כל משחק שמתחיל לפני <strong>14:00 ביום המחרת</strong>. משחקים כאלה מסומנים עם "(מחר)" ליד השעה.</div>
             <span class="flow-tag">חלון: 20:00 היום — 14:00 מחר</span>
           </div>
@@ -248,7 +226,7 @@ def index():
         <div class="flow-step">
           <div class="flow-icon">⏰</div>
           <div class="flow-body">
-            <div class="flow-title">שלב 7 — תזמון אוטומטי</div>
+            <div class="flow-title">שלב 5 — תזמון אוטומטי</div>
             <div class="flow-desc">כל יום ב-<strong>20:00 שעון ישראל</strong> — APScheduler המובנה בשרת Flask מפעיל את כל התהליך. ניתן גם להפעיל ידנית מכל יום בלוח המשחקים.</div>
             <span class="flow-tag">APScheduler</span>
             <span class="flow-tag">Asia/Jerusalem (UTC+3)</span>
@@ -264,13 +242,9 @@ def index():
 
   <div class="card">
     <h3 style="margin-top:0">📊 שימוש ב-APIs</h3>
-    <div class="stat"><span>🤖 GPT-4o — קריאות</span><span class="val">{s['ai_calls']}</span></div>
-    <div class="stat"><span>🤖 GPT-4o — עלות</span><span class="val">${s['ai_cost']}</span></div>
-    <div class="stat"><span>🤖 GPT-4o — טוקנים</span><span class="val">{s['ai_input']:,} in / {s['ai_output']:,} out</span></div>
-    <div class="stat"><span>📈 Odds API — {s['odds_calls']}/500 החודש</span><span class="val">{s['odds_remaining']} נותרו</span></div>
-    <div class="bar-bg"><div class="bar-fill" style="width:{odds_bar}%"></div></div>
-    <div class="stat"><span>⚽ API-Football — {s['fb_calls']}/100 היום</span><span class="val">{s['fb_remaining']} נותרו</span></div>
-    <div class="bar-bg"><div class="bar-fill" style="width:{min(100, int(s['fb_calls']/100*100))}%"></div></div>
+    <div class="stat"><span>🤖 Gemini Flash — קריאות</span><span class="val">{s['gemini_calls']}</span></div>
+    <div class="stat"><span>🤖 Gemini Flash — עלות</span><span class="val">${s['gemini_cost']}</span></div>
+    <div class="stat"><span>🤖 Gemini Flash — טוקנים</span><span class="val">{s['gemini_input']:,} in / {s['gemini_output']:,} out</span></div>
     <div class="stat"><span>📨 Telegram</span><span class="val">∞</span></div>
   </div>
 

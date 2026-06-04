@@ -17,7 +17,6 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 from fixtures import get_todays_matches
-from odds import get_wc_odds, find_match_odds
 from analyzer import analyze_match, build_daily_message
 from telegram_send import send_long_message
 
@@ -37,20 +36,14 @@ def run(target_date: date | None = None):
 
     print(f"[The Gambler] Found {len(matches)} matches")
 
-    # 2. Fetch all odds once
-    print("[The Gambler] Fetching odds...")
-    all_odds = get_wc_odds()
-    print(f"[The Gambler] Got odds for {len(all_odds)} events")
-
-    # 3. Analyze each match with Claude
+    # 2. Analyze each match with Gemini
     analyses = []
     for match in matches:
         print(f"[The Gambler] Analyzing: {match['home_he']} vs {match['away_he']}")
-        odds = find_match_odds(match["home_en"], match["away_en"], all_odds)
-        analysis = analyze_match(match, odds)
+        analysis = analyze_match(match)
         analyses.append(analysis)
 
-    # 4. Build and send daily message
+    # 3. Build and send daily message
     message = build_daily_message(matches, analyses, today_str)
     print(f"[The Gambler] Sending message ({len(message)} chars)...")
     success = send_long_message(message)

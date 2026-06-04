@@ -5,21 +5,21 @@ from pathlib import Path
 
 USAGE_FILE = Path("data/usage.json")
 
-# Pricing (USD per 1M tokens) — GPT-4o
-GPT45_INPUT_PRICE  = 2.50
-GPT45_OUTPUT_PRICE = 10.00
-ODDS_API_MONTHLY_LIMIT    = 500
-APIFOOTBALL_DAILY_LIMIT   = 100
+# Pricing (USD per 1M tokens) — Gemini 2.0 Flash
+GEMINI_INPUT_PRICE  = 0.10
+GEMINI_OUTPUT_PRICE = 0.40
+ODDS_API_MONTHLY_LIMIT   = 500
+APIFOOTBALL_DAILY_LIMIT  = 100
 
 
 def _load() -> dict:
     if USAGE_FILE.exists():
         return json.loads(USAGE_FILE.read_text())
     return {
-        "openai":        {"input_tokens": 0, "output_tokens": 0, "calls": 0, "cost_usd": 0.0},
-        "odds_api":      {"calls": 0, "month": ""},
-        "apifootball":   {"calls": 0, "day": ""},
-        "last_updated":  ""
+        "gemini":      {"input_tokens": 0, "output_tokens": 0, "calls": 0, "cost_usd": 0.0},
+        "odds_api":    {"calls": 0, "month": ""},
+        "apifootball": {"calls": 0, "day": ""},
+        "last_updated": ""
     }
 
 
@@ -29,23 +29,20 @@ def _save(data: dict):
 
 
 def _migrate(data: dict) -> dict:
-    """Migrate old anthropic key to openai if needed."""
-    if "anthropic" in data and "openai" not in data:
-        data["openai"] = data.pop("anthropic")
-    if "openai" not in data:
-        data["openai"] = {"input_tokens": 0, "output_tokens": 0, "calls": 0, "cost_usd": 0.0}
+    if "gemini" not in data:
+        data["gemini"] = {"input_tokens": 0, "output_tokens": 0, "calls": 0, "cost_usd": 0.0}
     if "apifootball" not in data:
         data["apifootball"] = {"calls": 0, "day": ""}
     return data
 
 
-def track_openai(input_tokens: int, output_tokens: int):
+def track_gemini(input_tokens: int, output_tokens: int):
     data = _migrate(_load())
-    cost = (input_tokens * GPT45_INPUT_PRICE + output_tokens * GPT45_OUTPUT_PRICE) / 1_000_000
-    data["openai"]["input_tokens"]  += input_tokens
-    data["openai"]["output_tokens"] += output_tokens
-    data["openai"]["calls"]         += 1
-    data["openai"]["cost_usd"]      = round(data["openai"]["cost_usd"] + cost, 6)
+    cost = (input_tokens * GEMINI_INPUT_PRICE + output_tokens * GEMINI_OUTPUT_PRICE) / 1_000_000
+    data["gemini"]["input_tokens"]  += input_tokens
+    data["gemini"]["output_tokens"] += output_tokens
+    data["gemini"]["calls"]         += 1
+    data["gemini"]["cost_usd"]      = round(data["gemini"]["cost_usd"] + cost, 6)
     data["last_updated"] = datetime.now().isoformat()
     _save(data)
 
@@ -75,20 +72,14 @@ def track_odds_api():
 def get_stats() -> dict:
     data  = _migrate(_load())
     month = datetime.now().strftime("%Y-%m")
-    odds_calls = data["odds_api"]["calls"] if data["odds_api"]["month"] == month else 0
-    ai = data["openai"]
-
-    day = datetime.now().strftime("%Y-%m-%d")
-    fb  = data["apifootball"]
-    fb_calls = fb["calls"] if fb["day"] == day else 0
-
+    day   = datetime.now().strftime("%Y-%m-%d")
+    g  = data["gemini"]
+    fb = data["apifootball"]
     return {
-        "ai_calls":       ai["calls"],
-        "ai_input":       ai["input_tokens"],
-        "ai_output":      ai["output_tokens"],
-        "ai_cost":        round(ai["cost_usd"], 4),
-        "odds_calls":     odds_calls,
-        "odds_remaining": ODDS_API_MONTHLY_LIMIT - odds_calls,
-        "fb_calls":       fb_calls,
-        "fb_remaining":   APIFOOTBALL_DAILY_LIMIT - fb_calls,
+        "gemini_calls":   g["calls"],
+        "gemini_input":   g["input_tokens"],
+        "gemini_output":  g["output_tokens"],
+        "gemini_cost":    round(g["cost_usd"], 4),
+        "fb_calls":       fb["calls"] if fb["day"] == day else 0,
+        "fb_remaining":   APIFOOTBALL_DAILY_LIMIT - (fb["calls"] if fb["day"] == day else 0),
     }
