@@ -1,24 +1,25 @@
 """
-Fetch team form & stats from API-Football (api-sports.io).
+Fetch team form & odds from API-Football (api-sports.io).
 Free tier: 100 requests/day.
-We use 2 calls per team (search + last-5 fixtures) → cache team IDs to save calls.
+Team IDs cached locally to save API calls.
 """
 import os
 import json
 import requests
+from datetime import date
 from pathlib import Path
 from dotenv import load_dotenv
 from usage_tracker import track_apifootball
 
 load_dotenv()
 
-API_KEY  = os.getenv("APIFOOTBALL_KEY")
-BASE_URL = "https://v3.football.api-sports.io"
-HEADERS  = {"x-apisports-key": API_KEY}
+API_KEY    = os.getenv("APIFOOTBALL_KEY")
+BASE_URL   = "https://v3.football.api-sports.io"
+HEADERS    = {"x-apisports-key": API_KEY}
 CACHE_FILE = Path("data/team_id_cache.json")
 
 
-# ── Cache helpers ─────────────────────────────────────────────────────────
+# ── Cache ─────────────────────────────────────────────────────────────────
 
 def _load_cache() -> dict:
     if CACHE_FILE.exists():
@@ -31,122 +32,158 @@ def _save_cache(cache: dict):
     CACHE_FILE.write_text(json.dumps(cache, indent=2))
 
 
-# ── API calls ─────────────────────────────────────────────────────────────
+# ── API helpers ───────────────────────────────────────────────────────────
 
-def _search_team_id(name: str) -> int | None:
-    """Search team by name, return API-Football team ID."""
+def _api_get(path: str, params: dict) -> list:
     track_apifootball()
-    resp = requests.get(
-        f"{BASE_URL}/teams",
-        headers=HEADERS,
-        params={"search": name},
-        timeout=10,
-    )
-    if resp.status_code != 200:
-        return None
-    data = resp.json().get("response", [])
-    if not data:
-        return None
-    return data[0]["team"]["id"]
-
-
-def _get_team_id(name_en: str) -> int | None:
-    """Get team ID from cache or API."""
-    cache = _load_cache()
-    key = name_en.lower()
-    if key in cache:
-        return cache[key]
-    team_id = _search_team_id(name_en)
-    if team_id:
-        cache[key] = team_id
-        _save_cache(cache)
-    return team_id
-
-
-def _get_last_fixtures(team_id: int, n: int = 5) -> list[dict]:
-    """Fetch last N finished fixtures for a team."""
-    track_apifootball()
-    resp = requests.get(
-        f"{BASE_URL}/fixtures",
-        headers=HEADERS,
-        params={"team": team_id, "last": n, "status": "FT"},
-        timeout=10,
-    )
+    resp = requests.get(f"{BASE_URL}{path}", headers=HEADERS, params=params, timeout=10)
     if resp.status_code != 200:
         return []
     return resp.json().get("response", [])
 
 
-# ── Public interface ───────────────────────────────────────────────────────
+def _get_team_id(name_en: str) -> int | None:
+    """Return API-Football team ID, using local cache."""
+    cache = _load_cache()
+    key   = name_en.lower()
+    if key in cache:
+        return cache[key]
+    data = _api_get("/teams", {"search": name_en})
+    if not data:
+        return None
+    team_id = data[0]["team"]["id"]
+    cache[key] = team_id
+    _save_cache(cache)
+    return team_id
 
-def get_team_form(name_en: str) -> dict | None:
-    """
-    Returns a dict with recent form data for a team, or None on failure.
-    {
-      "form":           "WWDLW",
-      "goals_for":      8,
-      "goals_against":  3,
-      "matches":        5,
-      "form_text":      "5 משחקים אחרונים: W W D L W | 8 שערים / 3 ספוגים"
+
+# ── Form ──────────────────────────────────────────────────────────────────
+
+def _get_team_form(team_id: int, n: int = 5) -> dict | None:
+    fixtures = _api_get("/fixtures", {"team": team_id, "last": n, "status": "FT"})
+    if not fixtures:
+        return None
+
+    form_chars = []
+    goals_for = goals_against = 0
+
+    for f in fixtures:
+        teams   = f["teams"]
+        goals   = f["goals"]
+        is_home = teams["home"]["id"] == team_id
+        gf = (goals["home"] if is_home else goals["away"]) or 0
+        ga = (goals["away"] if is_home else goals["home"]) or 0
+        winner = (teams["home"] if is_home else teams["away"])["winner"]
+        goals_for     += gf
+        goals_against += ga
+        form_chars.append("W" if winner is True else ("L" if winner is False else "D"))
+
+    form_str  = " ".join(form_chars)
+    n_actual  = len(form_chars)
+    return {
+        "form":          "".join(form_chars),
+        "goals_for":     goals_for,
+        "goals_against": goals_against,
+        "form_text":     f"{n_actual} משחקים אחרונים: {form_str} | {goals_for} שערים / {goals_against} ספוגים",
     }
+
+
+# ── Odds ──────────────────────────────────────────────────────────────────
+
+def _find_fixture_id(home_id: int, away_id: int, match_date: date) -> int | None:
+    """Find the API-Football fixture ID for a specific match."""
+    date_str = match_date.isoformat()
+    # search by home team + date
+    fixtures = _api_get("/fixtures", {"team": home_id, "date": date_str})
+    for f in fixtures:
+        teams = f["teams"]
+        if teams["home"]["id"] == home_id and teams["away"]["id"] == away_id:
+            return f["fixture"]["id"]
+    # fallback: search by away team + date
+    fixtures = _api_get("/fixtures", {"team": away_id, "date": date_str})
+    for f in fixtures:
+        teams = f["teams"]
+        if teams["home"]["id"] == home_id and teams["away"]["id"] == away_id:
+            return f["fixture"]["id"]
+    return None
+
+
+def _get_fixture_odds(fixture_id: int) -> dict | None:
+    """
+    Fetch h2h odds for a fixture. Returns {home, draw, away} best odds or None.
+    Aggregates across bookmakers and takes the average.
+    """
+    data = _api_get("/odds", {"fixture": fixture_id, "bet": 1})  # bet 1 = Match Winner
+    if not data:
+        return None
+
+    home_vals, draw_vals, away_vals = [], [], []
+
+    for bookmaker_entry in data:
+        for bm in bookmaker_entry.get("bookmakers", []):
+            for bet in bm.get("bets", []):
+                if bet.get("name") != "Match Winner":
+                    continue
+                values = {v["value"]: float(v["odd"]) for v in bet.get("values", [])}
+                if "Home" in values:
+                    home_vals.append(values["Home"])
+                if "Draw" in values:
+                    draw_vals.append(values["Draw"])
+                if "Away" in values:
+                    away_vals.append(values["Away"])
+
+    if not home_vals or not away_vals:
+        return None
+
+    def avg(lst): return round(sum(lst) / len(lst), 2)
+
+    return {
+        "home_odds": avg(home_vals),
+        "draw_odds": avg(draw_vals) if draw_vals else None,
+        "away_odds": avg(away_vals),
+        "bookmakers": len(home_vals),
+    }
+
+
+def get_apifootball_odds(home_en: str, away_en: str, match_date: date) -> dict | None:
+    """
+    Public: fetch averaged h2h odds from API-Football for a specific match.
+    Returns None if unavailable.
     """
     if not API_KEY:
         return None
     try:
-        team_id = _get_team_id(name_en)
-        if not team_id:
+        home_id = _get_team_id(home_en)
+        away_id = _get_team_id(away_en)
+        if not home_id or not away_id:
             return None
 
-        fixtures = _get_last_fixtures(team_id)
-        if not fixtures:
+        fixture_id = _find_fixture_id(home_id, away_id, match_date)
+        if not fixture_id:
             return None
 
-        form_chars = []
-        goals_for = goals_against = 0
-
-        for f in fixtures:
-            teams  = f["teams"]
-            goals  = f["goals"]
-            is_home = teams["home"]["id"] == team_id
-
-            gf = (goals["home"] if is_home else goals["away"]) or 0
-            ga = (goals["away"] if is_home else goals["home"]) or 0
-            winner = (teams["home"] if is_home else teams["away"])["winner"]
-
-            goals_for     += gf
-            goals_against += ga
-            form_chars.append("W" if winner is True else ("L" if winner is False else "D"))
-
-        form_str  = " ".join(form_chars)
-        n = len(form_chars)
-        form_text = (
-            f"{n} משחקים אחרונים: {form_str} | "
-            f"{goals_for} שערים / {goals_against} ספוגים"
-        )
-        return {
-            "form":          "".join(form_chars),
-            "goals_for":     goals_for,
-            "goals_against": goals_against,
-            "matches":       n,
-            "form_text":     form_text,
-        }
+        return _get_fixture_odds(fixture_id)
     except Exception as e:
-        print(f"[football_stats] Error for {name_en}: {e}")
+        print(f"[football_stats] Odds error for {home_en} vs {away_en}: {e}")
         return None
 
 
+# ── Public: form + combined odds text ────────────────────────────────────
+
 def get_match_stats(home_en: str, away_en: str) -> str:
-    """
-    Returns a formatted stats string for both teams, ready to inject into the prompt.
-    Returns empty string if data unavailable.
-    """
-    home = get_team_form(home_en)
-    away = get_team_form(away_en)
-
-    lines = []
-    if home:
-        lines.append(f"בית  — {home['form_text']}")
-    if away:
-        lines.append(f"חוץ  — {away['form_text']}")
-
-    return "\n".join(lines)
+    """Form stats string for both teams (injected into GPT prompt)."""
+    if not API_KEY:
+        return ""
+    try:
+        home_id = _get_team_id(home_en)
+        away_id = _get_team_id(away_en)
+        lines   = []
+        for label, team_id in [("בית", home_id), ("חוץ", away_id)]:
+            if team_id:
+                form = _get_team_form(team_id)
+                if form:
+                    lines.append(f"{label}  — {form['form_text']}")
+        return "\n".join(lines)
+    except Exception as e:
+        print(f"[football_stats] Form error: {e}")
+        return ""
