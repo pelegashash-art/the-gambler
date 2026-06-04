@@ -1,12 +1,12 @@
 import os
-import anthropic
+from openai import OpenAI
 from dotenv import load_dotenv
 from odds import implied_prob
-from usage_tracker import track_anthropic
+from usage_tracker import track_openai
 
 load_dotenv(override=True)
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 SYSTEM_PROMPT = """אתה מומחה הימורי כדורגל בכיר. אתה כותב בעברית תקנית, בהירה וקולחת.
 חוקים מוחלטים:
@@ -19,7 +19,7 @@ SYSTEM_PROMPT = """אתה מומחה הימורי כדורגל בכיר. אתה 
 
 
 def analyze_match(match: dict, odds: dict | None) -> str:
-    """Analyze a match using Claude and return a formatted Telegram message block."""
+    """Analyze a match using GPT-4.5 and return a formatted Telegram message block."""
 
     if odds:
         home_prob = implied_prob(odds["home_odds"])
@@ -62,19 +62,22 @@ def analyze_match(match: dict, odds: dict | None) -> str:
 
 💡 בקצרה: [משפט אחד מנומק, מקסימום 12 מילים]"""
 
-    response = client.messages.create(
-        model="claude-sonnet-4-5",
+    response = client.chat.completions.create(
+        model="gpt-4.5-preview",
         max_tokens=600,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": prompt}]
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt}
+        ]
     )
 
-    if response.usage:
-        track_anthropic(response.usage.input_tokens, response.usage.output_tokens)
+    usage = response.usage
+    if usage:
+        track_openai(usage.prompt_tokens, usage.completion_tokens)
 
-    for block in response.content:
-        if hasattr(block, "text"):
-            return block.text.strip()
+    content = response.choices[0].message.content
+    if content:
+        return content.strip()
 
     return f"⚽ {match['home_he']} נגד {match['away_he']}\n🕐 {match['kickoff_il_str']}\n\n{odds_text}"
 
