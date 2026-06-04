@@ -33,7 +33,12 @@ def analyze_match(match: dict) -> str:
 שמור על סגנון כתיבה קריא, פשוט ומהיר לסריקה בטלפון. כתוב בעברית בלבד."""
 
     try:
-        response = model.generate_content(prompt)
+        print(f"[Gemini] Calling API for {home} vs {away}...")
+        response = model.generate_content(
+            prompt,
+            request_options={"timeout": 30}
+        )
+        print(f"[Gemini] Response received for {home} vs {away}")
 
         if hasattr(response, "usage_metadata"):
             u = response.usage_metadata
@@ -45,7 +50,7 @@ def analyze_match(match: dict) -> str:
         return response.text.strip()
 
     except Exception as e:
-        print(f"[Gemini] Error for {home} vs {away}: {e}")
+        print(f"[Gemini] Error for {home} vs {away}: {type(e).__name__}: {e}")
         return f"⚽ {home} נגד {away}\n🕐 {time} | מונדיאל 2026 סיבוב {rnd}\n\n⚠️ שגיאה בניתוח"
 
 
