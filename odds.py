@@ -31,16 +31,36 @@ def get_wc_odds() -> list[dict]:
 
 # Name aliases: Excel name → possible API names
 NAME_ALIASES = {
-    "south korea":    ["korea republic", "republic of korea", "korea"],
-    "korea republic": ["south korea", "korea"],
-    "czech republic": ["czechia", "czech"],
-    "czechia":        ["czech republic", "czech"],
-    "usa":            ["united states", "united states of america"],
-    "united states":  ["usa", "us"],
-    "ivory coast":    ["cote d'ivoire", "côte d'ivoire"],
-    "dr congo":       ["congo dr", "democratic republic of congo"],
-    "north macedonia":["macedonia"],
-    "cape verde":     ["cabo verde"],
+    # Korea
+    "south korea":             ["korea republic", "republic of korea", "korea"],
+    "korea republic":          ["south korea", "korea"],
+    # Czech
+    "czech republic":          ["czechia", "czech"],
+    "czechia":                 ["czech republic", "czech"],
+    # USA
+    "usa":                     ["united states", "united states of america"],
+    "united states":           ["usa", "united states of america"],
+    # Ivory Coast
+    "ivory coast":             ["cote d'ivoire", "côte d'ivoire"],
+    "côte d'ivoire":           ["ivory coast", "cote d'ivoire"],
+    "cote d'ivoire":           ["ivory coast", "côte d'ivoire"],
+    # Congo
+    "dr congo":                ["congo dr", "democratic republic of congo"],
+    "congo dr":                ["dr congo", "democratic republic of congo"],
+    # Bosnia
+    "bosnia and herzegovina":  ["bosnia & herzegovina", "bosnia"],
+    "bosnia & herzegovina":    ["bosnia and herzegovina", "bosnia"],
+    # Turkey
+    "türkiye":                 ["turkey"],
+    "turkey":                  ["türkiye"],
+    # Curacao
+    "curacao":                 ["curaçao"],
+    "curaçao":                 ["curacao"],
+    # Cape Verde
+    "cape verde islands":      ["cape verde"],
+    "cape verde":              ["cape verde islands", "cabo verde"],
+    # Macedonia
+    "north macedonia":         ["macedonia"],
 }
 
 def _name_variants(name: str) -> list[str]:
