@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from odds import implied_prob
 from usage_tracker import track_openai
 from football_stats import get_match_stats, get_apifootball_odds
+from oddspapi import get_oddspapi_odds
 
 load_dotenv(override=True)
 
@@ -38,8 +39,9 @@ def analyze_match(match: dict, odds: dict | None) -> str:
     else:
         odds_text = "יחס הימורים אינו זמין"
 
-    # ── Odds from API-Football (secondary source) ─────────────────────────
     match_date = match["kickoff_il"].date()
+
+    # ── Odds from API-Football (secondary source) ─────────────────────────
     fb_odds = get_apifootball_odds(match["home_en"], match["away_en"], match_date)
     if fb_odds:
         fb_odds_text = fmt_odds(match['home_he'], match['away_he'], fb_odds)
@@ -49,6 +51,17 @@ def analyze_match(match: dict, odds: dict | None) -> str:
         )
     else:
         fb_odds_section = ""
+
+    # ── Odds from OddsPapi (300+ bookmakers) ─────────────────────────────
+    op_odds = get_oddspapi_odds(match["home_en"], match["away_en"], match_date)
+    if op_odds:
+        op_odds_text = fmt_odds(match['home_he'], match['away_he'], op_odds)
+        op_odds_section = (
+            f"\nיחסי הימורים (OddsPapi, ממוצע {op_odds['bookmakers']} בוקמייקרים):\n"
+            f"{op_odds_text}"
+        )
+    else:
+        op_odds_section = ""
 
     # ── Form stats ────────────────────────────────────────────────────────
     stats_text = get_match_stats(match["home_en"], match["away_en"])
@@ -64,8 +77,9 @@ def analyze_match(match: dict, odds: dict | None) -> str:
 יחסי הימורים (The Odds API):
 {odds_text}
 {fb_odds_section}
+{op_odds_section}
 {stats_section}
-אם יש שני מקורות אודס — השווה ביניהם בניתוח: האם הם מסכימים? אם יש פער משמעותי בין המקורות, ציין זאת.
+אם יש יותר ממקור אחד לאודס — השווה ביניהם: האם הם מסכימים? פער גדול בין מקורות = אי-ודאות גבוהה, יש לציין זאת בניתוח ולהפחית ביטחון.
 
 בנה את ההודעה בפורמט הבא (החלף את הסוגריים המרובעים בתוכן אמיתי):
 

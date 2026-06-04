@@ -10,6 +10,7 @@ GPT45_INPUT_PRICE  = 2.50
 GPT45_OUTPUT_PRICE = 10.00
 ODDS_API_MONTHLY_LIMIT    = 500
 APIFOOTBALL_DAILY_LIMIT   = 100
+ODDSPAPI_DAILY_LIMIT      = 1000
 
 
 def _load() -> dict:
@@ -36,6 +37,8 @@ def _migrate(data: dict) -> dict:
         data["openai"] = {"input_tokens": 0, "output_tokens": 0, "calls": 0, "cost_usd": 0.0}
     if "apifootball" not in data:
         data["apifootball"] = {"calls": 0, "day": ""}
+    if "oddspapi" not in data:
+        data["oddspapi"] = {"calls": 0, "day": ""}
     return data
 
 
@@ -61,6 +64,17 @@ def track_apifootball():
     _save(data)
 
 
+def track_oddspapi():
+    data = _migrate(_load())
+    day  = datetime.now().strftime("%Y-%m-%d")
+    if data["oddspapi"]["day"] != day:
+        data["oddspapi"]["calls"] = 0
+        data["oddspapi"]["day"]   = day
+    data["oddspapi"]["calls"] += 1
+    data["last_updated"] = datetime.now().isoformat()
+    _save(data)
+
+
 def track_odds_api():
     data  = _migrate(_load())
     month = datetime.now().strftime("%Y-%m")
@@ -82,13 +96,18 @@ def get_stats() -> dict:
     fb  = data["apifootball"]
     fb_calls = fb["calls"] if fb["day"] == day else 0
 
+    op  = data["oddspapi"]
+    op_calls = op["calls"] if op["day"] == day else 0
+
     return {
-        "ai_calls":       ai["calls"],
-        "ai_input":       ai["input_tokens"],
-        "ai_output":      ai["output_tokens"],
-        "ai_cost":        round(ai["cost_usd"], 4),
-        "odds_calls":     odds_calls,
-        "odds_remaining": ODDS_API_MONTHLY_LIMIT - odds_calls,
-        "fb_calls":       fb_calls,
-        "fb_remaining":   APIFOOTBALL_DAILY_LIMIT - fb_calls,
+        "ai_calls":        ai["calls"],
+        "ai_input":        ai["input_tokens"],
+        "ai_output":       ai["output_tokens"],
+        "ai_cost":         round(ai["cost_usd"], 4),
+        "odds_calls":      odds_calls,
+        "odds_remaining":  ODDS_API_MONTHLY_LIMIT - odds_calls,
+        "fb_calls":        fb_calls,
+        "fb_remaining":    APIFOOTBALL_DAILY_LIMIT - fb_calls,
+        "op_calls":        op_calls,
+        "op_remaining":    ODDSPAPI_DAILY_LIMIT - op_calls,
     }

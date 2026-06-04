@@ -271,6 +271,8 @@ def index():
     <div class="bar-bg"><div class="bar-fill" style="width:{odds_bar}%"></div></div>
     <div class="stat"><span>⚽ API-Football — {s['fb_calls']}/100 היום</span><span class="val">{s['fb_remaining']} נותרו</span></div>
     <div class="bar-bg"><div class="bar-fill" style="width:{min(100, int(s['fb_calls']/100*100))}%"></div></div>
+    <div class="stat"><span>🎰 OddsPapi — {s['op_calls']}/1000 היום</span><span class="val">{s['op_remaining']} נותרו</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:{min(100, int(s['op_calls']/1000*100))}%"></div></div>
     <div class="stat"><span>📨 Telegram</span><span class="val">∞</span></div>
   </div>
 
