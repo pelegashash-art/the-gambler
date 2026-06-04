@@ -5,9 +5,9 @@ from pathlib import Path
 
 USAGE_FILE = Path("data/usage.json")
 
-# Pricing (USD per 1M tokens) — GPT-4.5
-GPT45_INPUT_PRICE  = 75.00
-GPT45_OUTPUT_PRICE = 150.00
+# Pricing (USD per 1M tokens) — GPT-4o
+GPT45_INPUT_PRICE  = 2.50
+GPT45_OUTPUT_PRICE = 10.00
 ODDS_API_MONTHLY_LIMIT = 500
 
 

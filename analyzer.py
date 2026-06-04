@@ -63,7 +63,7 @@ def analyze_match(match: dict, odds: dict | None) -> str:
 💡 בקצרה: [משפט אחד מנומק, מקסימום 12 מילים]"""
 
     response = client.chat.completions.create(
-        model="gpt-4.5-preview",
+        model="gpt-4o",
         max_tokens=600,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},

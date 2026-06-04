@@ -206,10 +206,10 @@ def index():
         <div class="flow-step">
           <div class="flow-icon">🤖</div>
           <div class="flow-body">
-            <div class="flow-title">שלב 3 — ניתוח עם GPT-4.5</div>
-            <div class="flow-desc">לכל משחק — קריאה נפרדת ל-<strong>OpenAI GPT-4.5</strong> עם שמות הקבוצות, שעה ויחסי הימורים. מחזיר ניתוח בעברית, המלצה, ניחוש תוצאה וביטחון בכוכבים.</div>
+            <div class="flow-title">שלב 3 — ניתוח עם GPT-4o</div>
+            <div class="flow-desc">לכל משחק — קריאה נפרדת ל-<strong>OpenAI GPT-4o</strong> עם שמות הקבוצות, שעה ויחסי הימורים. מחזיר ניתוח בעברית, המלצה, ניחוש תוצאה וביטחון בכוכבים.</div>
             <span class="flow-tag">🌐 api.openai.com</span>
-            <span class="flow-tag">gpt-4.5-preview</span>
+            <span class="flow-tag">gpt-4o</span>
             <span class="flow-tag">~600 טוקנים/קריאה</span>
           </div>
         </div>
@@ -243,9 +243,9 @@ def index():
 
   <div class="card">
     <h3 style="margin-top:0">📊 שימוש ב-APIs</h3>
-    <div class="stat"><span>🤖 GPT-4.5 — קריאות</span><span class="val">{s['ai_calls']}</span></div>
-    <div class="stat"><span>🤖 GPT-4.5 — עלות</span><span class="val">${s['ai_cost']}</span></div>
-    <div class="stat"><span>🤖 GPT-4.5 — טוקנים</span><span class="val">{s['ai_input']:,} in / {s['ai_output']:,} out</span></div>
+    <div class="stat"><span>🤖 GPT-4o — קריאות</span><span class="val">{s['ai_calls']}</span></div>
+    <div class="stat"><span>🤖 GPT-4o — עלות</span><span class="val">${s['ai_cost']}</span></div>
+    <div class="stat"><span>🤖 GPT-4o — טוקנים</span><span class="val">{s['ai_input']:,} in / {s['ai_output']:,} out</span></div>
     <div class="stat"><span>📈 Odds API — {s['odds_calls']}/500 החודש</span><span class="val">{s['odds_remaining']} נותרו</span></div>
     <div class="bar-bg"><div class="bar-fill" style="width:{odds_bar}%"></div></div>
     <div class="stat"><span>📨 Telegram</span><span class="val">∞</span></div>
