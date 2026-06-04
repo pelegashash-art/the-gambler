@@ -93,19 +93,29 @@ def _get_team_form(team_id: int, n: int = 5) -> dict | None:
 def _find_fixture_id(home_id: int, away_id: int, match_date: date) -> int | None:
     """Find the API-Football fixture ID for a specific match."""
     date_str = match_date.isoformat()
-    # search by home team + date
-    fixtures = _api_get("/fixtures", {"team": home_id, "date": date_str})
-    for f in fixtures:
-        teams = f["teams"]
-        if teams["home"]["id"] == home_id and teams["away"]["id"] == away_id:
-            return f["fixture"]["id"]
-    # fallback: search by away team + date
-    fixtures = _api_get("/fixtures", {"team": away_id, "date": date_str})
-    for f in fixtures:
-        teams = f["teams"]
-        if teams["home"]["id"] == home_id and teams["away"]["id"] == away_id:
-            return f["fixture"]["id"]
-    return None
+
+    def search(team_id: int, extra: dict = {}) -> int | None:
+        params = {"team": team_id, "date": date_str, "season": 2026, **extra}
+        fixtures = _api_get("/fixtures", params)
+        for f in fixtures:
+            teams = f["teams"]
+            if teams["home"]["id"] == home_id and teams["away"]["id"] == away_id:
+                return f["fixture"]["id"]
+        return None
+
+    # Try with WC league (league=1 = FIFA World Cup in API-Football)
+    result = search(home_id, {"league": 1})
+    if result:
+        return result
+    # Fallback: without league filter
+    result = search(home_id)
+    if result:
+        return result
+    # Fallback: search by away team
+    result = search(away_id, {"league": 1})
+    if result:
+        return result
+    return search(away_id)
 
 
 def _get_fixture_odds(fixture_id: int) -> dict | None:
