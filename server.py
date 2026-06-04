@@ -237,9 +237,18 @@ def index():
         </div>
 
         <div class="flow-step">
+          <div class="flow-icon">🌙</div>
+          <div class="flow-body">
+            <div class="flow-title">שלב 6 — כיסוי משחקי לילה</div>
+            <div class="flow-desc">מכיוון שרוב משחקי המונדיאל מתקיימים בשעות הלילה של ישראל, ההודעה של 20:00 כוללת גם את משחקי אחרי חצות — כל משחק שמתחיל לפני <strong>14:00 ביום המחרת</strong>. משחקים כאלה מסומנים עם "(מחר)" ליד השעה.</div>
+            <span class="flow-tag">חלון: 20:00 היום — 14:00 מחר</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
           <div class="flow-icon">⏰</div>
           <div class="flow-body">
-            <div class="flow-title">שלב 6 — תזמון אוטומטי</div>
+            <div class="flow-title">שלב 7 — תזמון אוטומטי</div>
             <div class="flow-desc">כל יום ב-<strong>20:00 שעון ישראל</strong> — APScheduler המובנה בשרת Flask מפעיל את כל התהליך. ניתן גם להפעיל ידנית מכל יום בלוח המשחקים.</div>
             <span class="flow-tag">APScheduler</span>
             <span class="flow-tag">Asia/Jerusalem (UTC+3)</span>
