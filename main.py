@@ -19,7 +19,7 @@ load_dotenv(override=True)
 from fixtures import get_todays_matches
 from odds import get_wc_odds, find_match_odds
 from analyzer import analyze_match, build_daily_message
-from whatsapp import send_long_message
+from telegram_send import send_long_message
 
 ISRAEL_TZ = pytz.timezone("Asia/Jerusalem")
 
