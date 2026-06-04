@@ -461,6 +461,82 @@ def odds_check():
 </html>"""
 
 
+@app.route("/api-debug")
+def api_debug():
+    if not session.get("auth"):
+        return redirect("/login")
+
+    import os, requests as req, json
+
+    results = {}
+
+    # ── OddsPapi ──────────────────────────────────────────────────────────
+    op_key = os.getenv("ODDSPAPI_KEY", "")
+    results["oddspapi_key"] = op_key[:8] + "..." if op_key else "❌ NOT SET"
+    if op_key:
+        try:
+            r = req.get("https://v5.oddspapi.io/en/sports",
+                        params={"apiKey": op_key}, timeout=10)
+            results["oddspapi_sports_status"] = r.status_code
+            results["oddspapi_sports_body"]   = r.text[:2000]
+        except Exception as e:
+            results["oddspapi_sports_error"] = str(e)
+
+    # ── API-Football ──────────────────────────────────────────────────────
+    fb_key = os.getenv("APIFOOTBALL_KEY", "")
+    results["apifootball_key"] = fb_key[:8] + "..." if fb_key else "❌ NOT SET"
+    if fb_key:
+        try:
+            headers = {"x-apisports-key": fb_key}
+            # Test: fixtures for Mexico on 11 June 2026 (first WC match)
+            r = req.get("https://v3.football.api-sports.io/fixtures",
+                        headers=headers,
+                        params={"team": 16, "date": "2026-06-11", "league": 1, "season": 2026},
+                        timeout=10)
+            results["apifootball_fixture_status"] = r.status_code
+            results["apifootball_fixture_body"]   = r.text[:2000]
+        except Exception as e:
+            results["apifootball_fixture_error"] = str(e)
+
+        try:
+            # Test: odds for fixture (use a known upcoming fixture if exists)
+            r2 = req.get("https://v3.football.api-sports.io/odds",
+                         headers=headers,
+                         params={"league": 1, "season": 2026, "next": 5},
+                         timeout=10)
+            results["apifootball_odds_status"] = r2.status_code
+            results["apifootball_odds_body"]   = r2.text[:2000]
+        except Exception as e:
+            results["apifootball_odds_error"] = str(e)
+
+    def fmt(v):
+        if isinstance(v, str) and (v.startswith("{") or v.startswith("[")):
+            try:
+                return json.dumps(json.loads(v), indent=2, ensure_ascii=False)
+            except:
+                pass
+        return str(v)
+
+    rows = "".join(
+        f'<tr><td style="color:#94a3b8;width:200px;vertical-align:top;padding:8px">{k}</td>'
+        f'<td><pre style="margin:0;font-size:11px;white-space:pre-wrap;color:#f1f5f9">{fmt(v)}</pre></td></tr>'
+        for k, v in results.items()
+    )
+
+    return f"""<!DOCTYPE html>
+<html dir="ltr"><head><meta charset="UTF-8"><title>API Debug</title>
+<style>body{{font-family:monospace;background:#0f172a;color:#f1f5f9;padding:20px}}
+h2{{color:#10b981}}.back{{color:#64748b;text-decoration:none;font-size:13px}}
+table{{width:100%;border-collapse:collapse;font-size:13px}}
+tr{{border-bottom:1px solid #334155}}
+td{{padding:6px 8px;vertical-align:top}}
+</style></head><body>
+<a class="back" href="/">← חזרה</a>
+<h2>🔧 API Raw Debug</h2>
+<table>{rows}</table>
+</body></html>"""
+
+
 @app.route("/health")
 def health():
     return {"status": "ok"}
