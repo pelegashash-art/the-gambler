@@ -3,6 +3,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from odds import implied_prob
 from usage_tracker import track_openai
+from football_stats import get_match_stats
 
 load_dotenv(override=True)
 
@@ -33,6 +34,10 @@ def analyze_match(match: dict, odds: dict | None) -> str:
     else:
         odds_text = "יחס הימורים אינו זמין"
 
+    # Fetch live team form from API-Football
+    stats_text = get_match_stats(match["home_en"], match["away_en"])
+    stats_section = f"\nנתוני ביצועים אחרונים:\n{stats_text}" if stats_text else ""
+
     prompt = f"""נתח את המשחק הבא ובנה הודעה לפי הפורמט המדויק.
 
 פרטי המשחק:
@@ -42,7 +47,7 @@ def analyze_match(match: dict, odds: dict | None) -> str:
 
 יחסי הימורים:
 {odds_text}
-
+{stats_section}
 בנה את ההודעה בפורמט הבא (החלף את הסוגריים המרובעים בתוכן אמיתי):
 
 ⚽ {match['home_he']} נגד {match['away_he']}

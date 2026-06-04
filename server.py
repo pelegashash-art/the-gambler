@@ -204,20 +204,30 @@ def index():
         </div>
 
         <div class="flow-step">
+          <div class="flow-icon">⚽</div>
+          <div class="flow-body">
+            <div class="flow-title">שלב 3 — סטטיסטיקות חיות</div>
+            <div class="flow-desc">לכל קבוצה — שליפת 5 משחקים אחרונים מ-<strong>API-Football</strong>: פורמה (W/D/L), שערים שנבקעו וספוגים. מזהה הקבוצה נשמר ב-cache לחיסכון בקריאות.</div>
+            <span class="flow-tag">🌐 v3.football.api-sports.io</span>
+            <span class="flow-tag">100 קריאות/יום (חינם)</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
           <div class="flow-icon">🤖</div>
           <div class="flow-body">
-            <div class="flow-title">שלב 3 — ניתוח עם GPT-4o</div>
-            <div class="flow-desc">לכל משחק — קריאה נפרדת ל-<strong>OpenAI GPT-4o</strong> עם שמות הקבוצות, שעה ויחסי הימורים. מחזיר ניתוח בעברית, המלצה, ניחוש תוצאה וביטחון בכוכבים.</div>
+            <div class="flow-title">שלב 4 — ניתוח עם GPT-4o</div>
+            <div class="flow-desc">לכל משחק — קריאה נפרדת ל-<strong>OpenAI GPT-4o</strong> עם יחסי הימורים + נתוני פורמה עדכניים. מחזיר ניתוח בעברית, המלצה, ניחוש תוצאה וביטחון בכוכבים.</div>
             <span class="flow-tag">🌐 api.openai.com</span>
             <span class="flow-tag">gpt-4o</span>
-            <span class="flow-tag">~600 טוקנים/קריאה</span>
+            <span class="flow-tag">~700 טוקנים/קריאה</span>
           </div>
         </div>
 
         <div class="flow-step">
           <div class="flow-icon">📨</div>
           <div class="flow-body">
-            <div class="flow-title">שלב 4 — שליחה לטלגרם</div>
+            <div class="flow-title">שלב 5 — שליחה לטלגרם</div>
             <div class="flow-desc">כל הניתוחים מחוברים להודעה אחת ונשלחים לערוץ. הודעות ארוכות מפוצלות ל-4,000 תווים אוטומטית.</div>
             <span class="flow-tag">🌐 api.telegram.org</span>
             <span class="flow-tag">ללא מגבלה</span>
@@ -227,7 +237,7 @@ def index():
         <div class="flow-step">
           <div class="flow-icon">⏰</div>
           <div class="flow-body">
-            <div class="flow-title">תזמון אוטומטי</div>
+            <div class="flow-title">שלב 6 — תזמון אוטומטי</div>
             <div class="flow-desc">כל יום ב-<strong>20:00 שעון ישראל</strong> (17:00 UTC) — APScheduler המובנה בשרת מפעיל את כל התהליך.</div>
             <span class="flow-tag">APScheduler</span>
             <span class="flow-tag">Asia/Jerusalem</span>
@@ -248,6 +258,8 @@ def index():
     <div class="stat"><span>🤖 GPT-4o — טוקנים</span><span class="val">{s['ai_input']:,} in / {s['ai_output']:,} out</span></div>
     <div class="stat"><span>📈 Odds API — {s['odds_calls']}/500 החודש</span><span class="val">{s['odds_remaining']} נותרו</span></div>
     <div class="bar-bg"><div class="bar-fill" style="width:{odds_bar}%"></div></div>
+    <div class="stat"><span>⚽ API-Football — {s['fb_calls']}/100 היום</span><span class="val">{s['fb_remaining']} נותרו</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:{min(100, int(s['fb_calls']/100*100))}%"></div></div>
     <div class="stat"><span>📨 Telegram</span><span class="val">∞</span></div>
   </div>
 
