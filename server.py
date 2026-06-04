@@ -309,31 +309,46 @@ def odds_check():
         return redirect("/login")
 
     from datetime import timedelta
+    import requests as req
     from fixtures import load_fixtures
     from odds import get_wc_odds, find_match_odds
-    from oddspapi import get_oddspapi_odds
+    from oddspapi import get_oddspapi_odds, API_KEY as OP_KEY, BASE_URL as OP_BASE, _get as op_get
+    from football_stats import get_apifootball_odds, API_KEY as FB_KEY
 
     df = load_fixtures()
     df = df.sort_values("datetime_utc")
     today = date.today()
-    cutoff = today + timedelta(days=14)  # OddsPapi checked only for next 14 days
+    cutoff = today + timedelta(days=14)
 
-    # Fetch all Odds API events (1 call)
+    # The Odds API (1 call)
     all_odds = get_wc_odds()
     odds_teams = set()
     for e in all_odds:
         odds_teams.add(e.get("home_team", ""))
         odds_teams.add(e.get("away_team", ""))
 
+    # OddsPapi debug — what does /sports return?
+    op_sports_raw = op_get("/sports") if OP_KEY else None
+    op_sports_list = op_sports_raw if isinstance(op_sports_raw, list) else (
+        op_sports_raw.get("sports", op_sports_raw.get("data", [])) if isinstance(op_sports_raw, dict) else []
+    )
+    op_sports_html = "".join(
+        f'<span style="display:inline-block;background:#0f172a;border:1px solid #334155;'
+        f'border-radius:4px;padding:2px 8px;margin:2px;font-size:11px;color:#94a3b8">'
+        f'{s.get("name") or s.get("title","?")} (id:{s.get("id") or s.get("sportId","?")})</span>'
+        for s in op_sports_list
+    ) if op_sports_list else "<span style='color:#f87171'>אין תגובה מ-OddsPapi /sports</span>"
+
     rows = ""
-    covered_odds = covered_op = 0
+    covered_odds = covered_fb = covered_op = 0
     total = len(df)
 
     for _, row in df.iterrows():
-        home_en  = row["קבוצת בית (אנגלית)"]
-        away_en  = row["קבוצת חוץ (אנגלית)"]
-        date_str = row["datetime_il"].strftime("%d/%m/%Y %H:%M")
+        home_en    = row["קבוצת בית (אנגלית)"]
+        away_en    = row["קבוצת חוץ (אנגלית)"]
+        date_str   = row["datetime_il"].strftime("%d/%m/%Y %H:%M")
         match_date = row["datetime_il"].date()
+        upcoming   = today <= match_date <= cutoff
 
         # The Odds API
         found_odds = find_match_odds(home_en, away_en, all_odds)
@@ -341,15 +356,23 @@ def odds_check():
         s1 = "✅" if found_odds else "❌"
         c1 = "#10b981" if found_odds else "#f87171"
 
-        # OddsPapi — only for upcoming matches to save API calls
-        if today <= match_date <= cutoff:
+        # API-Football odds
+        if upcoming and FB_KEY:
+            fb = get_apifootball_odds(home_en, away_en, match_date)
+            if fb: covered_fb += 1
+            s2 = "✅" if fb else "❌"
+            c2 = "#10b981" if fb else "#f87171"
+        else:
+            s2, c2 = "—", "#475569"
+
+        # OddsPapi
+        if upcoming and OP_KEY:
             op = get_oddspapi_odds(home_en, away_en, match_date)
             if op: covered_op += 1
-            s2 = "✅" if op else "❌"
-            c2 = "#10b981" if op else "#f87171"
+            s3 = "✅" if op else "❌"
+            c3 = "#10b981" if op else "#f87171"
         else:
-            s2 = "—"
-            c2 = "#475569"
+            s3, c3 = "—", "#475569"
 
         rows += f"""<tr>
           <td style="color:#94a3b8;font-size:12px">{date_str}</td>
@@ -357,6 +380,7 @@ def odds_check():
           <td>{away_en}</td>
           <td style="color:{c1};font-weight:bold;text-align:center">{s1}</td>
           <td style="color:{c2};font-weight:bold;text-align:center">{s2}</td>
+          <td style="color:{c3};font-weight:bold;text-align:center">{s3}</td>
         </tr>"""
 
     api_names = "".join(
@@ -381,7 +405,7 @@ def odds_check():
     th {{ text-align: center; color: #64748b; padding: 6px 8px; border-bottom: 1px solid #334155; }}
     th:nth-child(1), th:nth-child(2), th:nth-child(3) {{ text-align: left; }}
     td {{ padding: 6px 8px; border-bottom: 1px solid #1e293b; }}
-    td:nth-child(4), td:nth-child(5) {{ text-align: center; }}
+    td:nth-child(4), td:nth-child(5), td:nth-child(6) {{ text-align: center; }}
     tr:hover td {{ background: #334155; }}
     .summary {{ display:flex; gap:24px; flex-wrap:wrap; margin-bottom:12px; font-size:14px; }}
     .sum-item {{ background:#0f172a; border-radius:8px; padding:8px 14px; }}
@@ -398,8 +422,12 @@ def odds_check():
       <div style="color:#64748b;font-size:12px">The Odds API</div>
     </div>
     <div class="sum-item">
+      <div class="sum-val">{covered_fb}/?</div>
+      <div style="color:#64748b;font-size:12px">API-Football (14 ימים)</div>
+    </div>
+    <div class="sum-item">
       <div class="sum-val">{covered_op}/?</div>
-      <div style="color:#64748b;font-size:12px">OddsPapi (14 ימים קרובים)</div>
+      <div style="color:#64748b;font-size:12px">OddsPapi (14 ימים)</div>
     </div>
     <div class="sum-item">
       <div class="sum-val">{len(all_odds)}</div>
@@ -413,7 +441,7 @@ def odds_check():
     <table>
       <tr>
         <th>תאריך</th><th>בית</th><th>חוץ</th>
-        <th>The Odds API</th><th>OddsPapi</th>
+        <th>The Odds API</th><th>API-Football</th><th>OddsPapi</th>
       </tr>
       {rows}
     </table>
@@ -422,6 +450,12 @@ def odds_check():
   <div class="card">
     <h3 style="margin-top:0">שמות קבוצות ב-Odds API ({len(odds_teams)})</h3>
     <div>{api_names}</div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">🔍 OddsPapi Debug — ספורטים זמינים</h3>
+    <p style="color:#64748b;font-size:12px;margin-top:0">מה מחזיר /sports — מאפשר לאמת שה-API key תקין ולמצוא את ה-sportId הנכון לכדורגל.</p>
+    <div>{op_sports_html}</div>
   </div>
 </body>
 </html>"""
