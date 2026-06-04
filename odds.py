@@ -29,21 +29,43 @@ def get_wc_odds() -> list[dict]:
                 return data
     return []
 
+# Name aliases: Excel name → possible API names
+NAME_ALIASES = {
+    "south korea":    ["korea republic", "republic of korea", "korea"],
+    "korea republic": ["south korea", "korea"],
+    "czech republic": ["czechia", "czech"],
+    "czechia":        ["czech republic", "czech"],
+    "usa":            ["united states", "united states of america"],
+    "united states":  ["usa", "us"],
+    "ivory coast":    ["cote d'ivoire", "côte d'ivoire"],
+    "dr congo":       ["congo dr", "democratic republic of congo"],
+    "north macedonia":["macedonia"],
+    "cape verde":     ["cabo verde"],
+}
+
+def _name_variants(name: str) -> list[str]:
+    """Return all known variants of a team name."""
+    key = name.lower()
+    return [key] + NAME_ALIASES.get(key, [])
+
+
 def find_match_odds(home_en: str, away_en: str, all_odds: list[dict]) -> dict | None:
-    """Find odds for a specific match by team name (fuzzy)."""
-    home_lower = home_en.lower()
-    away_lower = away_en.lower()
+    """Find odds for a specific match by team name (fuzzy + aliases)."""
+    home_variants = _name_variants(home_en)
+    away_variants = _name_variants(away_en)
 
     for event in all_odds:
         h = event.get("home_team", "").lower()
         a = event.get("away_team", "").lower()
-        # Partial match to handle name variations
-        if (home_lower in h or h in home_lower) and (away_lower in a or a in away_lower):
+
+        def matches(variants: list[str], api_name: str) -> bool:
+            return any(v in api_name or api_name in v for v in variants)
+
+        if matches(home_variants, h) and matches(away_variants, a):
             return parse_odds(event)
-        if (away_lower in h or h in away_lower) and (home_lower in a or a in home_lower):
+        if matches(away_variants, h) and matches(home_variants, a):
             result = parse_odds(event)
             if result:
-                # Swap home/away since we found reversed
                 result["home_odds"], result["away_odds"] = result["away_odds"], result["home_odds"]
             return result
     return None
