@@ -197,7 +197,7 @@ def index():
           <div class="flow-icon">🤖</div>
           <div class="flow-body">
             <div class="flow-title">שלב 2 — ניתוח Gemini Flash</div>
-            <div class="flow-desc">לכל משחק — קריאה נפרדת ל-<strong>Gemini 2.0 Flash</strong> עם שמות הקבוצות ושעת הקיקאוף. Gemini מחזיר ניתוח בעברית: פייבוריטית, יחסי כוחות (1X2%), צפי שערים (Over/Under 2.5), הימור מומלץ ותוצאה סבירה.</div>
+            <div class="flow-desc">לכל משחק — קריאה נפרדת ל-<strong>Gemini 3.5 Flash</strong> עם שמות הקבוצות ושעת הקיקאוף. Gemini מחזיר ניתוח בעברית: פייבוריטית, יחסי כוחות (1X2%), צפי שערים (Over/Under 2.5), הימור מומלץ ותוצאה סבירה.</div>
             <span class="flow-tag">🌐 generativelanguage.googleapis.com</span>
             <span class="flow-tag">gemini-3.5-flash</span>
             <span class="flow-tag">~$0.0001 למשחק</span>
