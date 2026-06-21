@@ -260,9 +260,12 @@ def index():
       📈 בדוק כיסוי Odds API
     </a>
     <div style="color:#64748b;font-size:12px;margin-top:6px">⏰ שליחה אוטומטית כל יום ב-18:00 שעון ישראל</div>
-    <form method="POST" action="/notify" style="margin-top:10px">
-      <button type="submit" style="background:#1e40af;color:white;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:13px">
-        📢 שלח עדכון שינוי שעה לטלגרם
+    <form method="POST" action="/notify" style="margin-top:10px;display:flex;gap:8px;align-items:stretch">
+      <input name="message" type="text" placeholder="הודעה לערוץ הטלגרם..."
+             style="flex:1;background:#0f172a;border:1px solid #334155;color:#f1f5f9;border-radius:6px;padding:7px 12px;font-size:13px;font-family:Arial,sans-serif" required>
+      <button type="submit"
+              style="background:#1e40af;color:white;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
+        📢 שלח
       </button>
     </form>
   </div>
@@ -285,7 +288,9 @@ def notify():
     if not session.get("auth"):
         return redirect("/login")
     from telegram_send import send_message
-    send_message("🔔 עדכון: מועד השליחה היומי של הפרדיקציות עודכן ל-18:00 שעון ישראל.")
+    msg = request.form.get("message", "").strip()
+    if msg:
+        send_message(msg)
     return redirect("/")
 
 
