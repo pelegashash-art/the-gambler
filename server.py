@@ -260,6 +260,11 @@ def index():
       📈 בדוק כיסוי Odds API
     </a>
     <div style="color:#64748b;font-size:12px;margin-top:6px">⏰ שליחה אוטומטית כל יום ב-18:00 שעון ישראל</div>
+    <form method="POST" action="/notify" style="margin-top:10px">
+      <button type="submit" style="background:#1e40af;color:white;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:13px">
+        📢 שלח עדכון שינוי שעה לטלגרם
+      </button>
+    </form>
   </div>
 </body>
 </html>"""
@@ -272,6 +277,15 @@ def test():
     target = request.form.get("date")
     target_date = date.fromisoformat(target) if target else None
     threading.Thread(target=run, args=(target_date,), daemon=True).start()
+    return redirect("/")
+
+
+@app.route("/notify", methods=["POST"])
+def notify():
+    if not session.get("auth"):
+        return redirect("/login")
+    from telegram_send import send_message
+    send_message("🔔 עדכון: מועד השליחה היומי של הפרדיקציות עודכן ל-18:00 שעון ישראל.")
     return redirect("/")
 
 
