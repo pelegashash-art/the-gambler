@@ -9,20 +9,35 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel("gemini-3.5-flash")
 
 
+def _stage_label(stage: str, rnd: int) -> str:
+    if stage == "Round of 32":
+        return "שלב 32 הגדולות"
+    return f"שלב הבתים סיבוב {rnd}"
+
+
+def _knockout_note(stage: str) -> str:
+    if stage == "Round of 32":
+        return "\nשים לב: זהו משחק נוק-אאוט — אין תיקו, יש הארכה ופנדלים אם צריך."
+    return ""
+
+
 def analyze_match(match: dict) -> str:
     """Analyze a match using Gemini Flash and return a formatted Telegram message block."""
 
-    home = match["home_he"]
-    away = match["away_he"]
-    time = match["kickoff_il_str"]
-    rnd  = match["round"]
+    home  = match["home_he"]
+    away  = match["away_he"]
+    time  = match["kickoff_il_str"]
+    rnd   = match["round"]
+    stage = match.get("stage", "Group Stage")
+    label = _stage_label(stage, rnd)
+    ko    = _knockout_note(stage)
 
-    prompt = f"""תפעל כמומחה לאנליזת כדורגל והימורי ספורט. אני צריך שתספק לי תחזית קצרה, תמציתית וממוקדת למשחק הבא: {home} נגד {away}.
+    prompt = f"""תפעל כמומחה לאנליזת כדורגל והימורי ספורט. אני צריך שתספק לי תחזית קצרה, תמציתית וממוקדת למשחק הבא: {home} נגד {away}.{ko}
 
 תציג את המידע בפורמט הבא בלבד, תוך שימוש בנקודות וללא הקדמות או סיכומים מיותרים:
 
 ⚽ {home} נגד {away}
-🕐 {time} | מונדיאל 2026 סיבוב {rnd}
+🕐 {time} | מונדיאל 2026 — {label}
 
 1. פייבוריטית ברורה: [מי הקבוצה שצפויה לנצח]
 2. יחסי כוחות (באחוזים ל-1X2): [למשל: 60% ניצחון {home}, 25% תיקו, 15% ניצחון {away}]
@@ -51,7 +66,7 @@ def analyze_match(match: dict) -> str:
 
     except Exception as e:
         print(f"[Gemini] Error for {home} vs {away}: {type(e).__name__}: {e}")
-        return f"⚽ {home} נגד {away}\n🕐 {time} | מונדיאל 2026 סיבוב {rnd}\n\n⚠️ שגיאה בניתוח"
+        return f"⚽ {home} נגד {away}\n🕐 {time} | מונדיאל 2026 — {label}\n\n⚠️ שגיאה בניתוח"
 
 
 def build_daily_message(matches: list[dict], analyses: list[str], target_date: str) -> str:
